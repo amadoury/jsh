@@ -23,8 +23,7 @@ int main(int argc, char *argv[]){
 
     do {
         rl_outstream = stderr;
-        
-        free(lastCommandResult);
+
         
         fprintf(stderr, "\001\033[32m\002[");
         fprintf(stderr, "%d", nb_jobs);
@@ -34,6 +33,8 @@ int main(int argc, char *argv[]){
         char *pwd = pwdJSH();
         fprintf(stderr, pwd);
         fprintf(stderr, "\001\033[00m\002");
+
+        strcat(pwd, "\n");
 
         char * line = readline("$");
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
@@ -51,15 +52,12 @@ int main(int argc, char *argv[]){
         }
         else if (strcmp(arg->data[0], "pwd") == 0){
             fprintf(stderr, pwd);
-            fprintf(stderr, "\n");
-            lastCommandResult = malloc(sizeof(char) * (strlen(pwd) + 1));
-            strcpy(lastCommandResult, pwd)
+            lastCommandResult = pwd;
         }
         else if (strcmp(arg->data[0], "exit") == 0){
             exitJSH(0);
         }
         else if (strcmp(arg->data[0], "?") == 0){
-            exitJSH(0);
             fprintf(stderr, lastCommandResult);
         }
         else{
