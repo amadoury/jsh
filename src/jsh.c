@@ -3,10 +3,13 @@
 // #include "jsh.h"
 // #include "pwd.h"
 // #include "prompt.h"
+
 #include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <sys/wait.h>
 #include "parser.h"
+#include "command.h"
 
 
 
@@ -14,25 +17,50 @@ int main(int argc, char *argv[]){
 
     struct argv_t * arg = malloc(sizeof(struct argv_t));
 
+    int nb_jobs = 0;
+
+    char * lastCommandResult = "";
+
     do {
         rl_outstream = stderr;
+        
+        free(lastCommandResult);
+        
+        fprintf(stderr, "\001\033[32m\002[");
+        fprintf(stderr, "%d", nb_jobs);
+        fprintf(stderr, "]\001\033[36m\002");
+        
 
-        char * line = readline(">$:");
+        char *pwd = pwdJSH();
+        fprintf(stderr, pwd);
+        fprintf(stderr, "\001\033[00m\002");
+
+        char * line = readline("$");
+        char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
+        strcpy(l, line);
 
         arg = split(line);
-        add_history(line);
+        add_history(l);
 
         if (strcmp(arg->data[0], "cd") == 0){
             if (cd(arg->data[1]) == 1){
                 fprintf(stderr, "error with cd");
                 exit(1);
             }
+            lastCommandResult = "";
         }
         else if (strcmp(arg->data[0], "pwd") == 0){
-            //do pwd
+            fprintf(stderr, pwd);
+            fprintf(stderr, "\n");
+            lastCommandResult = malloc(sizeof(char) * (strlen(pwd) + 1));
+            strcpy(lastCommandResult, pwd)
         }
         else if (strcmp(arg->data[0], "exit") == 0){
-            //do exit
+            exitJSH(0);
+        }
+        else if (strcmp(arg->data[0], "?") == 0){
+            exitJSH(0);
+            fprintf(stderr, lastCommandResult);
         }
         else{
             char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
