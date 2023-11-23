@@ -79,7 +79,7 @@ int main(int argc, char *argv[], char *envp[]){
             pid_t pids = fork();
             switch (pids)
             {
-            case 0 :  
+            case 0 :
                 execl(path, arg->data[1], NULL);
                 break;
             default:
