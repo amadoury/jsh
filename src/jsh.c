@@ -11,7 +11,7 @@ int main(int argc, char *argv[], char *envp[]){
 
     int nb_jobs = 0;
 
- int last_command_return = 0;
+    int last_command_return = 0;
     rl_outstream = stderr;
 
     do {
@@ -76,15 +76,16 @@ int main(int argc, char *argv[], char *envp[]){
                 strcat(path, arg->data[0]);
 
 
-             pid_t pids = fork();
-            switch (pids)
-            {
-            case 0 :  
-                execl(path, arg->data[1], NULL);
-                break;
-            default:
-                wait(pids);
-                break;
+                pid_t pids = fork();
+                switch (pids)
+                {
+                case 0 :  
+                    execl(path, arg->data[1], NULL);
+                    break;
+                default:
+                    wait(pids);
+                    break;
+                }
             }
         }
     }
