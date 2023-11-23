@@ -16,7 +16,6 @@ void exit_jsh(int val)
 int cd(const char *pathname){
     if(pathname == NULL){
         char *home = getenv("HOME");
-        fprintf(stderr,"%s\n",home);
         if(home == NULL) return 1;
         if(chdir(home) == -1) return 1;
         return 0;

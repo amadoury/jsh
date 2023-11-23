@@ -49,7 +49,7 @@ int main(int argc, char *argv[], char *envp[]){
         if (arg->len != 0){
             if (strcmp(arg->data[0], "cd") == 0){
                 if (arg->len == 1){
-                    last_command_return = cd("");
+                    last_command_return = cd(NULL);
                     if (last_command_return == 1){
                         fprintf(rl_outstream, "error with cd");
                         exit(1);
