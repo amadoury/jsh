@@ -34,28 +34,16 @@ int cd(const char *pathname){
 
 char *pwd_jsh()
 {
-    char *pwd = (char *)malloc(MAX_PATH_LENGTH * sizeof(char));
+    char *pwd = malloc(MAX_PATH_LENGTH * sizeof(char));
     if (pwd == NULL)
     {
-        perror("Erreur lors de l'allocation de mémoire");
-        exit_jsh(1);
+        return NULL;
     }
 
-    char *cwd = (char *)malloc(MAX_PATH_LENGTH * sizeof(char));
-    if (cwd == NULL)
+    if (getcwd(pwd, MAX_PATH_LENGTH) == NULL)
     {
-        perror("Erreur lors de l'allocation de mémoire");
-        exit_jsh(1);
+        return NULL;
     }
-
-    if (getcwd(cwd, MAX_PATH_LENGTH) == NULL)
-    {
-        perror("Erreur lors de la récupération du répertoire de travail actuel");
-        exit_jsh(1);
-    }
-
-    strcpy(pwd, cwd);
-    free(cwd);
 
     return pwd;
 }

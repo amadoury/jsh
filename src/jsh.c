@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
 
         char *pwd = pwd_jsh();
         
-        fprintf(rl_outstream, "\001\033[32m\002[%d]\001\033[36m\002");
+        fprintf(rl_outstream, "\001\033[32m\002[%d]\001\033[36m\002", nb_jobs);
         if(strlen(pwd) >= 26){
             fprintf(rl_outstream, "...%s", pwd+strlen(pwd)-23);
         }
