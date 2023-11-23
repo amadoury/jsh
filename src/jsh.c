@@ -5,31 +5,32 @@
 #include "parser.h"
 #include "command.h"
 
-
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[], char *envp[]){
 
     struct argv_t * arg = malloc(sizeof(struct argv_t));
 
     int nb_jobs = 0;
 
-    char * lastCommandResult = "";
+    int last_command_return = 0;
+    rl_outstream = stderr;
 
     do {
-        rl_outstream = stderr;
 
-        
         fprintf(stderr, "\001\033[32m\002[");
         fprintf(stderr, "%d", nb_jobs);
         fprintf(stderr, "]\001\033[36m\002");
         
+        char *pwd = pwd_jsh();
 
-        char *pwd = pwdJSH();
-        fprintf(stderr, pwd);
+        fprintf(stderr, "%s", pwd);
+
         fprintf(stderr, "\001\033[00m\002");
 
         strcat(pwd, "\n");
 
         char * line = readline("$");
+        fprintf(stderr,"test3\n");
+
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
 
@@ -37,21 +38,31 @@ int main(int argc, char *argv[]){
         add_history(l);
 
         if (strcmp(arg->data[0], "cd") == 0){
-            if (cd(arg->data[1]) == 1){
-                fprintf(stderr, "error with cd");
-                exit(1);
+            if (arg->len == 1){
+                last_command_return = cd("");
+                if (last_command_return == 1){
+                    fprintf(stderr, "error with cd");
+                    exit(1);
+                }
             }
-            lastCommandResult = "";
+            else{
+                last_command_return = cd(arg->data[1]);
+                if (last_command_return == 1){
+                    fprintf(stderr, "error with cd");
+                    exit(1);
+                }
+            }
         }
         else if (strcmp(arg->data[0], "pwd") == 0){
+            pwd = pwd_jsh();
             fprintf(stderr, pwd);
-            lastCommandResult = pwd;
+            last_command_return = pwd == NULL ? 1 : 0;
         }
         else if (strcmp(arg->data[0], "exit") == 0){
-            exitJSH(0);
+            exit_jsh(0);
         }
         else if (strcmp(arg->data[0], "?") == 0){
-            fprintf(stderr, lastCommandResult);
+            fprintf(stderr, "%d",last_command_return);
         }
         else{
             char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
@@ -62,16 +73,22 @@ int main(int argc, char *argv[]){
 
             strcpy(path, "/usr/bin/");
             strcat(path, arg->data[0]);
-            switch (fork())
+
+
+            pid_t pids = fork();
+            switch (pids)
             {
             case 0 :  
-                execv(path, arg->data[1]);
+                int res_exec = execl(path, arg->data[1], NULL);
+                if (res_exec == -1){
+                    perror("errow with exec");
+                    exit(1);
+                }
                 break;
             default:
-                wait(NULL);
+                wait(pids);
                 break;
             }
-
         }
     }
     while(strcmp(arg->data[0], "exit") != 0);

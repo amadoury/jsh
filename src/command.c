@@ -1,21 +1,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 1024
 
 char *lastPath;
 
-void exitJSH(int val)
+void exit_jsh(int val)
 {
     exit(val);
 }
 
 int cd(const char *pathname){
-
-    if(*pathname == '\0'){
+    if(pathname == NULL){
         char *home = getenv("HOME");
+        fprintf(stderr,"%s\n",home);
         if(home == NULL) return 1;
         if(chdir(home) == -1) return 1;
         return 0;
@@ -30,30 +31,18 @@ int cd(const char *pathname){
     return 0;
 }
 
-char *pwdJSH()
+char *pwd_jsh()
 {
-    char *pwd = (char *)malloc(MAX_PATH_LENGTH * sizeof(char));
+    char *pwd = malloc(MAX_PATH_LENGTH * sizeof(char));
     if (pwd == NULL)
     {
-        perror("Erreur lors de l'allocation de mémoire");
-        exitJSH(1);
+        return NULL;
     }
 
-    char *cwd = (char *)malloc(MAX_PATH_LENGTH * sizeof(char));
-    if (cwd == NULL)
+    if (getcwd(pwd, MAX_PATH_LENGTH) == NULL)
     {
-        perror("Erreur lors de l'allocation de mémoire");
-        exitJSH(1);
+        return NULL;
     }
-
-    if (getcwd(cwd, MAX_PATH_LENGTH) == NULL)
-    {
-        perror("Erreur lors de la récupération du répertoire de travail actuel");
-        exitJSH(1);
-    }
-
-    strcpy(pwd, cwd);
-    free(cwd);
 
     return pwd;
 }
