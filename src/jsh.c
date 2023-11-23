@@ -12,22 +12,24 @@ int main(int argc, char *argv[]){
 
     int nb_jobs = 0;
 
-    char * lastCommandResult = "";
+    char * last_command_result = "";
 
     do {
         rl_outstream = stderr;
 
+        char *pwd = pwd_jsh();
         
-        fprintf(stderr, "\001\033[32m\002[");
-        fprintf(stderr, "%d", nb_jobs);
-        fprintf(stderr, "]\001\033[36m\002");
-        
-
-        char *pwd = pwdJSH();
-        fprintf(stderr, pwd);
-        fprintf(stderr, "\001\033[00m\002");
+        fprintf(rl_outstream, "\001\033[32m\002[%d]\001\033[36m\002");
+        if(strlen(pwd) >= 26){
+            fprintf(rl_outstream, "...%s", pwd+strlen(pwd)-23);
+        }
+        else{
+            fprintf(rl_outstream, "%s", pwd);
+        }
 
         strcat(pwd, "\n");
+
+        fprintf(rl_outstream, "\001\033[00m\002");
 
         char * line = readline("$");
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
@@ -37,21 +39,26 @@ int main(int argc, char *argv[]){
         add_history(l);
 
         if (strcmp(arg->data[0], "cd") == 0){
+            if(arg->len == 1){
+                if (cd("") == 1){
+                    fprintf(stderr, "error with cd");
+                    exit(1);
+                }
+            }
             if (cd(arg->data[1]) == 1){
                 fprintf(stderr, "error with cd");
                 exit(1);
             }
-            lastCommandResult = "";
         }
         else if (strcmp(arg->data[0], "pwd") == 0){
             fprintf(stderr, pwd);
-            lastCommandResult = pwd;
+            last_command_result = pwd;
         }
         else if (strcmp(arg->data[0], "exit") == 0){
-            exitJSH(0);
+            exit_jsh(0);
         }
         else if (strcmp(arg->data[0], "?") == 0){
-            fprintf(stderr, lastCommandResult);
+            fprintf(stderr, last_command_result);
         }
         else{
             char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
