@@ -17,23 +17,32 @@ int main(int argc, char *argv[], char *envp[]){
     do {
 
         char *pwd = pwd_jsh();
-        
-        fprintf(rl_outstream, "\001\033[32m\002[%d]\001\033[36m\002", nb_jobs);
+        char *p = malloc(sizeof(char) * 41);
+        strcat(p, "\001\033[32m\002[");
+        char *nb_jobs_tab = malloc(sizeof(char) * 2);
+        nb_jobs_tab[0] = nb_jobs + '0';
+        nb_jobs_tab[1] = '\0';
+        strcat(p, nb_jobs_tab);
+        free(nb_jobs_tab);
+        strcat(p, "]\001\033[36m\002");
+
         if(strlen(pwd) >= 26){
-            fprintf(rl_outstream, "...%s", pwd+strlen(pwd)-23);
+            strcat(p, "...");
+            strcat(p, pwd+strlen(pwd)-23);
         }
         else{
-            fprintf(rl_outstream, "%s", pwd);
+            strcat(p, pwd);
         }
 
-        strcat(pwd, "\n");
+        strcat(p, "\001\033[00m\002$ ");
 
-        fprintf(rl_outstream, "\001\033[00m\002");
-
-        char * line = readline("$ ");
+        char * line = readline(p);
+        free(p);
+        free(pwd);
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
         add_history(l);
+        free(l);
 
         arg = split(line);
         
