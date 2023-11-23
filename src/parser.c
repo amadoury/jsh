@@ -8,24 +8,31 @@ struct argv_t * split(char * line){
 
     char ** data ;
     int index = 0;
+    if (nb_word != 0){
+        data = malloc(sizeof(char *) * (nb_word+ 1));
 
-    data = malloc(sizeof(char *) * (nb_word+ 1));
+        if (data == NULL){
+            fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
+            exit(1);
+        }
 
-    if (data == NULL){
-        fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
-        exit(1);
+        char * word = strtok(line, " ");
+        
+        while (word != NULL){
+            data[index] = word;
+            word = strtok(NULL, " ");
+            ++index;
+        }
+        data[nb_word] = NULL;
+        tab_data->data = data;
+        tab_data->len = nb_word;
     }
-
-    char * word = strtok(line, " ");
+    else{
+        tab_data->len = 0;
+        tab_data->data = NULL;
+    }
     
-    while (word != NULL){
-        data[index] = word;
-        word = strtok(NULL, " ");
-        ++index;
-    }
-    data[nb_word] = NULL;
-    tab_data->data = data;
-    tab_data->len = nb_word;
+
     return tab_data;
 }
 
