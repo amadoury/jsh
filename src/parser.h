@@ -10,7 +10,6 @@ struct argv_t{
     int len;
 };
 
-char ** parse_line(char *);
 int nb_words(char *);
 struct argv_t * split(char *);
 

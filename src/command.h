@@ -6,12 +6,11 @@
 #include <string.h>
 #include <unistd.h>
 
-
-void exitJSH(int);
+void exit_jsh(int);
 
 int cd(const char *);
 
-char *pwdJSH();
+char *pwd_jsh();
 
 
 #endif
