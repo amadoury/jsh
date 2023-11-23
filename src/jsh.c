@@ -76,21 +76,15 @@ int main(int argc, char *argv[], char *envp[]){
                 strcat(path, arg->data[0]);
 
 
-                pid_t pids = fork();
-                switch (pids)
-                {
-                case 0 :  
-                    int res_exec = execv(path, arg->data[1]);
-                    last_command_return = res_exec == -1 ? 1 : 0;
-                    if (res_exec == -1){
-                        perror("errow with exec");
-                        exit(1);
-                    }
-                    break;
-                default:
-                    wait(pids);
-                    break;
-                }
+             pid_t pids = fork();
+            switch (pids)
+            {
+            case 0 :  
+                execl(path, arg->data[1], NULL);
+                break;
+            default:
+                wait(pids);
+                break;
             }
         }
     }
