@@ -1,13 +1,7 @@
-// #include "cd.h"
-// #include "exit.h"
-// #include "jsh.h"
-// #include "pwd.h"
-// #include "prompt.h"
 #include <stdio.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "parser.h"
-
 
 
 int main(int argc, char *argv[]){
