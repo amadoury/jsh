@@ -5,17 +5,16 @@
 #include "parser.h"
 #include "command.h"
 
-
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[], char *envp[]){
 
     struct argv_t * arg = malloc(sizeof(struct argv_t));
 
     int nb_jobs = 0;
 
-    char * last_command_result = "";
+ int last_command_return = 0;
+    rl_outstream = stderr;
 
     do {
-        rl_outstream = stderr;
 
         char *pwd = pwd_jsh();
         
@@ -32,6 +31,7 @@ int main(int argc, char *argv[]){
         fprintf(rl_outstream, "\001\033[00m\002");
 
         char * line = readline("$");
+
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
 
@@ -39,46 +39,53 @@ int main(int argc, char *argv[]){
         add_history(l);
 
         if (strcmp(arg->data[0], "cd") == 0){
-            if(arg->len == 1){
-                if (cd("") == 1){
-                    fprintf(stderr, "error with cd");
+            if (arg->len == 1){
+                last_command_return = cd("");
+                if (last_command_return == 1){
+                    fprintf(rl_outstream, "error with cd");
                     exit(1);
                 }
             }
-            if (cd(arg->data[1]) == 1){
-                fprintf(stderr, "error with cd");
-                exit(1);
+            else{
+                last_command_return = cd(arg->data[1]);
+                if (last_command_return == 1){
+                    fprintf(rl_outstream, "error with cd");
+                    exit(1);
+                }
             }
         }
         else if (strcmp(arg->data[0], "pwd") == 0){
-            fprintf(stderr, pwd);
-            last_command_result = pwd;
+            pwd = pwd_jsh();
+            fprintf(stderr, "%s\n",pwd);
+            last_command_return = (pwd == NULL) ? 1 : 0;
         }
         else if (strcmp(arg->data[0], "exit") == 0){
             exit_jsh(0);
         }
         else if (strcmp(arg->data[0], "?") == 0){
-            fprintf(stderr, last_command_result);
+            fprintf(rl_outstream, "%d\n",last_command_return);
         }
         else{
             char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
             if (path == NULL){
-                fprintf(stderr, "error path allocation");
+                fprintf(rl_outstream, "error path allocation");
                 exit(1);
             }
 
             strcpy(path, "/usr/bin/");
             strcat(path, arg->data[0]);
-            switch (fork())
+
+
+            pid_t pids = fork();
+            switch (pids)
             {
             case 0 :  
-                execv(path, arg->data[1]);
+                execl(path, arg->data[1], NULL);
                 break;
             default:
-                wait(NULL);
+                wait(pids);
                 break;
             }
-
         }
     }
     while(strcmp(arg->data[0], "exit") != 0);

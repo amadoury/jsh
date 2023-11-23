@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "command.h"
+#include <stdio.h>
 
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 1024
+
+char *last_path;
 
 void exit_jsh(int val)
 {
@@ -12,9 +14,9 @@ void exit_jsh(int val)
 }
 
 int cd(const char *pathname){
-
-    if(*pathname == '\0'){
+    if(pathname == NULL){
         char *home = getenv("HOME");
+        fprintf(stderr,"%s\n",home);
         if(home == NULL) return 1;
         if(chdir(home) == -1) return 1;
         return 0;

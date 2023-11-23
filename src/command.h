@@ -6,8 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-char *last_path;
-
 void exit_jsh(int);
 
 int cd(const char *);

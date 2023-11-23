@@ -1,9 +1,5 @@
 #include "parser.h"
 
-char ** parse_line(char * line){
-
-}
-
 struct argv_t * split(char * line){
 
     struct argv_t * tab_data = malloc(sizeof(struct argv_t));
@@ -13,7 +9,7 @@ struct argv_t * split(char * line){
     char ** data ;
     int index = 0;
 
-    data = malloc(sizeof(char *) * nb_word);
+    data = malloc(sizeof(char *) * (nb_word+ 1));
 
     if (data == NULL){
         fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
@@ -27,7 +23,7 @@ struct argv_t * split(char * line){
         word = strtok(NULL, " ");
         ++index;
     }
-
+    data[nb_word] = NULL;
     tab_data->data = data;
     tab_data->len = nb_word;
     return tab_data;
