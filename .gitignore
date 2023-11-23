@@ -29,7 +29,7 @@
 *.dylib
 
 # Executables
-../jsh
+jsh
 *.exe
 *.out
 *.app

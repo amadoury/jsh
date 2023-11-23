@@ -16,7 +16,7 @@ struct argv_t * split(char * line){
     data = malloc(sizeof(char *) * nb_word);
 
     if (data == NULL){
-        fprintf(stderr, "error with malloc in split %u\n", nb_word * sizeof(char *));
+        fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
         exit(1);
     }
 
