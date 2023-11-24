@@ -18,6 +18,7 @@ int main(int argc, char *argv[], char *envp[]){
 
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * 41);
+        *p = '\0';
         strcat(p, "\001\033[32m\002[");
         char *nb_jobs_tab = malloc(sizeof(char) * 2);
         nb_jobs_tab[0] = nb_jobs + '0';
