@@ -13,26 +13,6 @@ void exit_jsh(int val)
     exit(val);
 }
 
-int cd(const char *pathname){
-    if(pathname == NULL){
-        char *home = getenv("HOME");
-        if(home == NULL) return 1;
-        if(chdir(home) == -1) return 1;
-        return 0;
-    }
-    if(strcmp(pathname, "-") == 0){
-        if(last_path != NULL){
-            if(chdir(last_path) == -1) return 1;
-        }
-        return 0;
-    }
-    if(chdir(pathname) == -1) return 1;
-    free(last_path);
-    last_path = malloc(sizeof(char) * (strlen(pathname + 1)));
-    strcpy(last_path, pathname);
-    return 0;
-}
-
 char *pwd_jsh()
 {
     char *pwd = malloc(MAX_PATH_LENGTH * sizeof(char));
@@ -47,4 +27,45 @@ char *pwd_jsh()
     }
 
     return pwd;
+}
+
+int cd(const char *pathname){
+    
+    char *pwd = pwd_jsh();
+    char *new_last_path = malloc(sizeof(char) * (strlen(pwd + 1)));
+    strcpy(new_last_path, pwd);
+
+    if(pathname == NULL){
+        char *home = getenv("HOME");
+        if(home == NULL || chdir(home) == -1){
+            free(new_last_path);
+            return 1;
+        }
+        free(last_path);
+        last_path = new_last_path;
+        return 0;
+    }
+
+    if(strcmp(pathname, "-") == 0){
+        if(last_path != NULL){
+            if(chdir(last_path) == -1){
+                free(new_last_path);
+                return 1;
+            }
+            free(last_path);
+            last_path = new_last_path;
+        }
+        return 0;
+    }
+    
+    if(chdir(pathname) == -1){
+        free(new_last_path);
+        return 1;
+    }
+    else{
+        free(last_path);
+        last_path = new_last_path;
+    }
+    
+    return 0;
 }
