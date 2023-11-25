@@ -5,18 +5,6 @@
 #include "parser.h"
 #include "command.h"
 
-void func(struct argv_t * arg){
-    arg->data = arg->data + 1;
-    for(int i = 0; i <= arg->len - 1; ++i){
-        if (arg->data[i] == NULL){
-            fprintf(stderr, "NULL\n");
-        }
-        else{
-            fprintf(stderr, "%s\n", arg->data[i]);
-        }
-    }
-}
-
 
 int main(int argc, char *argv[], char *envp[]){
 
@@ -52,6 +40,10 @@ int main(int argc, char *argv[], char *envp[]){
         strcat(p, "\001\033[00m\002$ ");
 
         char * line = readline(p);
+        if (line == NULL){
+            exit_jsh(last_command_return);
+        }
+    
         free(p);
         free(pwd);
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
@@ -60,25 +52,25 @@ int main(int argc, char *argv[], char *envp[]){
         free(l);
 
         arg = split(line);
-    
+
         if (arg->len != 0){
             if (strcmp(arg->data[0], "cd") == 0){
                 if (arg->len == 1){
                     last_command_return = cd(NULL);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "No such file or directory\n");
+                        fprintf(stdout, "No such file or directory\n");
                     }
                 }
                 else{
                     last_command_return = cd(arg->data[1]);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "No such file or directory\n");
+                        fprintf(stdout, "No such file or directory\n");
                     }
                 }
             }
             else if (strcmp(arg->data[0], "pwd") == 0){
                 pwd = pwd_jsh();
-                fprintf(stderr, "%s\n",pwd);
+                fprintf(stdout, "%s\n",pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
             }
             else if (strcmp(arg->data[0], "exit") == 0){
@@ -90,16 +82,16 @@ int main(int argc, char *argv[], char *envp[]){
                     exit_jsh(val_exit);
                 }
                 else{
-                    fprintf(stderr, "exit has at most two arguments\n");
+                    fprintf(stdout, "exit has at most two arguments\n");
                 }
             }
             else if (strcmp(arg->data[0], "?") == 0){
-                fprintf(rl_outstream, "%d\n",last_command_return);
+                fprintf(stdout, "%d\n",last_command_return);
             }
             else{
                 char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
                 if (path == NULL){
-                    fprintf(rl_outstream, "error path allocation");
+                    fprintf(stdout, "error path allocation");
                     exit(1);
                 }
 
@@ -114,7 +106,7 @@ int main(int argc, char *argv[], char *envp[]){
                 {
                     int r = execv(path, arg->data);
                     if (r == -1){
-                        fprintf(stderr,"Unknown command\n");
+                        fprintf(stdout,"Unknown command\n");
                     }
                     break;
                 }
