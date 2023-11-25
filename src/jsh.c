@@ -5,6 +5,19 @@
 #include "parser.h"
 #include "command.h"
 
+void func(struct argv_t * arg){
+    arg->data = arg->data + 1;
+    for(int i = 0; i <= arg->len - 1; ++i){
+        if (arg->data[i] == NULL){
+            fprintf(stderr, "NULL\n");
+        }
+        else{
+            fprintf(stderr, "%s\n", arg->data[i]);
+        }
+    }
+}
+
+
 int main(int argc, char *argv[], char *envp[]){
 
     struct argv_t * arg = malloc(sizeof(struct argv_t));
@@ -36,21 +49,19 @@ int main(int argc, char *argv[], char *envp[]){
         add_history(l);
 
         arg = split(line);
-        
+    
         if (arg->len != 0){
             if (strcmp(arg->data[0], "cd") == 0){
                 if (arg->len == 1){
-                    last_command_return = cd("");
+                    last_command_return = cd(NULL);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "error with cd");
-                        exit(1);
+                        fprintf(rl_outstream, "No such file or directory\n");
                     }
                 }
                 else{
                     last_command_return = cd(arg->data[1]);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "error with cd");
-                        exit(1);
+                        fprintf(rl_outstream, "No such file or directory\n");
                     }
                 }
             }
@@ -75,15 +86,18 @@ int main(int argc, char *argv[], char *envp[]){
                 strcpy(path, "/usr/bin/");
                 strcat(path, arg->data[0]);
 
-
                 pid_t pids = fork();
+            
                 switch (pids)
                 {
-                case 0 :  
-                    execl(path, arg->data[1], NULL);
+                case 0 :
+                    int r = execv(path, arg->data);
+                    if (r == -1){
+                        perror("error execv");
+                    }
                     break;
                 default:
-                    wait(pids);
+                    wait(NULL);
                     break;
                 }
             }

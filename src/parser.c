@@ -3,13 +3,12 @@
 struct argv_t * split(char * line){
 
     struct argv_t * tab_data = malloc(sizeof(struct argv_t));
-    size_t len_line = strlen(line);
     int nb_word = nb_words(line);
 
     char ** data ;
     int index = 0;
     if (nb_word != 0){
-        data = malloc(sizeof(char *) * (nb_word+ 1));
+        data = malloc(sizeof(char *) * (nb_word));
 
         if (data == NULL){
             fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
@@ -23,8 +22,9 @@ struct argv_t * split(char * line){
             word = strtok(NULL, " ");
             ++index;
         }
-        data[nb_word] = NULL;
+
         tab_data->data = data;
+        data[nb_word] = NULL;
         tab_data->len = nb_word;
     }
     else{
@@ -32,7 +32,6 @@ struct argv_t * split(char * line){
         tab_data->data = NULL;
     }
     
-
     return tab_data;
 }
 

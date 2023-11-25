@@ -10,7 +10,7 @@ void exit_jsh(int);
 
 int cd(const char *);
 
-char *pwd_jsh();
+char * pwd_jsh();
 
 
 #endif
