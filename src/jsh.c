@@ -26,6 +26,7 @@ int main(int argc, char *argv[], char *envp[]){
 
     int last_command_return = 0;
     rl_outstream = stderr;
+    //char * line;
 
     do {
 
@@ -81,7 +82,16 @@ int main(int argc, char *argv[], char *envp[]){
                 last_command_return = (pwd == NULL) ? 1 : 0;
             }
             else if (strcmp(arg->data[0], "exit") == 0){
-                exit_jsh(0);
+                if (arg->len == 1){
+                    exit_jsh(0);
+                }
+                else if (arg->len == 2){
+                    int val_exit = atoi(arg->data[1]);
+                    exit_jsh(val_exit);
+                }
+                else{
+                    fprintf(stderr, "exit has at most two arguments\n");
+                }
             }
             else if (strcmp(arg->data[0], "?") == 0){
                 fprintf(rl_outstream, "%d\n",last_command_return);
@@ -103,7 +113,7 @@ int main(int argc, char *argv[], char *envp[]){
                 case 0 :
                     int r = execv(path, arg->data);
                     if (r == -1){
-                        perror("error execv");
+                        fprintf(stderr,"Unknown command\n");
                     }
                     break;
                 default:
