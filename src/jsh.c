@@ -54,12 +54,14 @@ int main(int argc, char *argv[], char *envp[]){
         char * line = readline(p);
         free(p);
         free(pwd);
+        if(line == NULL) break;
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
         add_history(l);
         free(l);
 
         arg = split(line);
+        
     
         if (arg->len != 0){
             if (strcmp(arg->data[0], "cd") == 0){
@@ -78,7 +80,7 @@ int main(int argc, char *argv[], char *envp[]){
             }
             else if (strcmp(arg->data[0], "pwd") == 0){
                 pwd = pwd_jsh();
-                fprintf(stderr, "%s\n",pwd);
+                fprintf(stdout, "%s\n",pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
             }
             else if (strcmp(arg->data[0], "exit") == 0){
