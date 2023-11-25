@@ -54,7 +54,7 @@ int main(int argc, char *argv[], char *envp[]){
         char * line = readline(p);
         free(p);
         free(pwd);
-        if(line == NULL) break;
+        if(line == NULL) exit(last_command_return);
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
         add_history(l);
@@ -68,13 +68,13 @@ int main(int argc, char *argv[], char *envp[]){
                 if (arg->len == 1){
                     last_command_return = cd(NULL);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "No such file or directory\n");
+                        fprintf(rl_outstream, "bash: cd: NONEXISTENT: No such file or directory\n");
                     }
                 }
                 else{
                     last_command_return = cd(arg->data[1]);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "No such file or directory\n");
+                        fprintf(rl_outstream, "bash: cd: NONEXISTENT: No such file or directory\n");
                     }
                 }
             }
@@ -85,7 +85,7 @@ int main(int argc, char *argv[], char *envp[]){
             }
             else if (strcmp(arg->data[0], "exit") == 0){
                 if (arg->len == 1){
-                    exit_jsh(0);
+                    exit_jsh(last_command_return);
                 }
                 else if (arg->len == 2){
                     int val_exit = atoi(arg->data[1]);
