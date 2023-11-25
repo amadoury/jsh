@@ -101,11 +101,14 @@ int main(int argc, char *argv[], char *envp[]){
                 switch (pids)
                 {
                 case 0 :
+                {
                     int r = execv(path, arg->data);
                     if (r == -1){
                         perror("error execv");
                     }
                     break;
+                }
+                    
                 default:
                     wait(NULL);
                     break;
