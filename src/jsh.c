@@ -78,11 +78,13 @@ int main(int argc, char *argv[], char *envp[]){
                     }
                 }
             }
+
             else if (strcmp(arg->data[0], "pwd") == 0){
                 pwd = pwd_jsh();
                 fprintf(stdout, "%s\n",pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
             }
+
             else if (strcmp(arg->data[0], "exit") == 0){
                 if (arg->len == 1){
                     exit_jsh(last_command_return);
@@ -95,9 +97,11 @@ int main(int argc, char *argv[], char *envp[]){
                     fprintf(stderr, "exit has at most two arguments\n");
                 }
             }
+
             else if (strcmp(arg->data[0], "?") == 0){
                 fprintf(rl_outstream, "%d\n",last_command_return);
             }
+
             else{
                 char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
                 if (path == NULL){
@@ -108,23 +112,21 @@ int main(int argc, char *argv[], char *envp[]){
                 strcpy(path, "/usr/bin/");
                 strcat(path, arg->data[0]);
 
-                pid_t pids = fork();
-            
-                switch (pids)
-                {
-                case 0 :
-                {
-                    int r = execv(path, arg->data);
-                    if (r == -1){
-                        fprintf(stderr,"Unknown command\n");
-                    }
-                    break;
+                switch (fork()){
+                    case -1:
+                        fprintf(rl_outstream, "error fork");
+                        exit(1);
+                    case 0:
+                        execve(path, arg->data, envp);
+
+                        last_command_return = 1;
+                        exit(0);
+                    default:
+                        wait(&last_command_return);
+                        free(path);
+                        break;
                 }
-                    
-                default:
-                    wait(NULL);
-                    break;
-                }
+
             }
         }
     }
