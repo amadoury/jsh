@@ -2,6 +2,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 #include "parser.h"
 #include "command.h"
 
@@ -111,18 +112,16 @@ int main(int argc, char *argv[], char *envp[]){
 
                 strcpy(path, "/usr/bin/");
                 strcat(path, arg->data[0]);
-
                 switch (fork()){
                     case -1:
                         fprintf(rl_outstream, "error fork");
                         exit(1);
                     case 0:
-                        execve(path, arg->data, envp);
-
-                        last_command_return = 1;
+                        execvp(arg->data[0], arg->data);
                         exit(0);
+                        break;
                     default:
-                        wait(&last_command_return);
+                        wait(NULL);
                         free(path);
                         break;
                 }
