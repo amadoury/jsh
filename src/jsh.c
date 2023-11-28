@@ -92,11 +92,11 @@ int main(int argc, char *argv[], char *envp[]){
                     exit_jsh(val_exit);
                 }
                 else{
-                    fprintf(stderr, "exit has at most two arguments\n");
+                    fprintf(stderr, "-bash: exit: too many arguments\n");
                 }
             }
             else if (strcmp(arg->data[0], "?") == 0){
-                fprintf(rl_outstream, "%d\n",last_command_return);
+                fprintf(stdout, "%d\n",last_command_return);
             }
             else{
                 char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
@@ -114,9 +114,14 @@ int main(int argc, char *argv[], char *envp[]){
                 {
                 case 0 :
                 {
-                    int r = execv(path, arg->data);
-                    if (r == -1){
-                        fprintf(stderr,"Unknown command\n");
+                    if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
+                        execv(arg->data[0], arg->data);
+                    }
+                    else{
+                        int r = execv(path, arg->data);
+                        if (r == -1){
+                            fprintf(stderr,"Unknown command\n");
+                        }
                     }
                     break;
                 }
