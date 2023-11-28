@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "command.h"
 
+#define SIZE_STR_INPUT 41
 
 int main(int argc, char *argv[], char *envp[]){
 
@@ -14,12 +15,15 @@ int main(int argc, char *argv[], char *envp[]){
 
     int last_command_return = 0;
     rl_outstream = stderr;
-    //char * line;
 
     do {
 
         char *pwd = pwd_jsh();
-        char *p = malloc(sizeof(char) * 41);
+        char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
+        if(p == NULL){
+            fprintf(stdout, "error malloc");
+            exit(1);
+        }
         *p = '\0';
         strcat(p, "\001\033[32m\002[");
         char *nb_jobs_tab = malloc(sizeof(char) * 2);
@@ -89,32 +93,36 @@ int main(int argc, char *argv[], char *envp[]){
             }
             else if (strcmp(arg->data[0], "?") == 0){
                 fprintf(stdout, "%d\n",last_command_return);
+                last_command_return = 0;
             }
             else{
-                char * path = malloc((10 + strlen(arg->data[0])) * sizeof(char));
-                if (path == NULL){
-                    fprintf(stdout, "error path allocation");
-                    exit(1);
-                }
-
-                strcpy(path, "/usr/bin/");
-                strcat(path, arg->data[0]);
 
                 pid_t pids = fork();
-            
+                int status;
                 switch (pids)
                 {
                 case 0 :
                 {
-                    int r = execv(path, arg->data);
-                    if (r == -1){
-                        fprintf(stdout,"Unknown command\n");
+                    if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
+                        execv(arg->data[0], arg->data);
+                    }
+                    else{
+                        int r = execvp(arg->data[0], arg->data);
+                        if (r == -1){
+                            fprintf(stdout,"Unknown command\n");
+                        }
                     }
                     break;
                 }
                     
                 default:
-                    wait(NULL);
+                    wait(&status);
+                    if (WIFEXITED(status)){
+                        last_command_return = WEXITSTATUS(status);
+                    }
+                    else {
+                        last_command_return = 1;
+                    }
                     break;
                 }
             }
