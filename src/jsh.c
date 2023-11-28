@@ -2,6 +2,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 #include "parser.h"
 #include "command.h"
 
@@ -74,11 +75,13 @@ int main(int argc, char *argv[], char *envp[]){
                     }
                 }
             }
+
             else if (strcmp(arg->data[0], "pwd") == 0){
                 pwd = pwd_jsh();
                 fprintf(stdout, "%s\n",pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
             }
+
             else if (strcmp(arg->data[0], "exit") == 0){
                 if (arg->len == 1){
                     exit_jsh(last_command_return);
@@ -91,10 +94,12 @@ int main(int argc, char *argv[], char *envp[]){
                     fprintf(stdout, "exit has at most two arguments\n");
                 }
             }
+
             else if (strcmp(arg->data[0], "?") == 0){
                 fprintf(stdout, "%d\n",last_command_return);
                 last_command_return = 0;
             }
+
             else{
 
                 pid_t pids = fork();
@@ -125,7 +130,7 @@ int main(int argc, char *argv[], char *envp[]){
                     }
                     break;
                 }
-            }
+             }
         }
     }
     while(arg->len == 0 || strcmp(arg->data[0], "exit") != 0);
