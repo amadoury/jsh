@@ -49,10 +49,6 @@ int main(int argc, char *argv[], char *envp[]){
         free(p);
         free(pwd);
         if(line == NULL){
-            // free(line);
-            // free_argv_data(arg);
-            // free(arg->data);
-            // free(arg);
             exit_jsh(last_command_return);
             }
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
@@ -87,19 +83,19 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
-                if (arg->len == 1){
-                    free(line);
+                if (arg->len == 1){                    
                     // free_argv_data(arg);
                     free(arg->data);
                     free(arg);
+                    free(line);
                     exit_jsh(last_command_return);
                 }
                 else if (arg->len == 2){
                     int val_exit = atoi(arg->data[1]);
-                    free(line);
                     // free_argv_data(arg);
                     free(arg->data);
                     free(arg);
+                    free(line);
                     exit_jsh(val_exit);
                 }
                 else{
@@ -131,10 +127,11 @@ int main(int argc, char *argv[], char *envp[]){
                             fprintf(stderr,"not-in-path: command not found\n");
                         }
                     }
-                    free(line);
+                    
                     // free_argv_data(arg);
                     free(arg->data);
                     free(arg);
+                    free(line);
                     return 0;
                 }
                     
@@ -146,13 +143,14 @@ int main(int argc, char *argv[], char *envp[]){
                     else {
                         last_command_return = 1;
                     }
-                    free(line);
-                    // free_argv_data(arg);
-                    free(arg->data);
-                    free(arg);
                     break;
                 }
             }
+            // free_argv_data(arg);
+            free(arg->data);
+            free(arg);
+            free(line);
+
         }
     }
     // free_argv_data(arg);
