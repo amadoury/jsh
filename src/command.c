@@ -42,7 +42,7 @@ int cd(const char *pathname){
             free(new_last_path);
             return 1;
         }
-        //free(last_path);
+        free(last_path);
         last_path = new_last_path;
         return 0;
     }
@@ -53,7 +53,7 @@ int cd(const char *pathname){
                 free(new_last_path);
                 return 1;
             }
-            //free(last_path);
+            free(last_path);
             last_path = new_last_path;
         }
         return 0;
