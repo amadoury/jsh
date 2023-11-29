@@ -45,16 +45,20 @@ int main(int argc, char *argv[], char *envp[]){
         strcat(p, "\001\033[00m\002$ ");
 
         char * line = readline(p);
-        if (line == NULL){
-            exit_jsh(last_command_return);
-        }
     
         add_history(line);
         free(p);
         free(pwd);
-        // char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
-        // strcpy(l, line);
-        // free(l);
+        if(line == NULL){
+            //free_argv_data(arg);
+            // free(arg->data);
+            // free(arg);
+            exit_jsh(last_command_return);
+        }
+        char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
+        strcpy(l, line);
+        add_history(l);
+        free(l);
 
         arg = split(line);
         //free(line);
@@ -79,18 +83,27 @@ int main(int argc, char *argv[], char *envp[]){
                 pwd = pwd_jsh();
                 fprintf(stdout, "%s\n",pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
+                free(pwd);
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
                 if (arg->len == 1){
+                    free(line);
+                    //free_argv_data(arg);
+                    free(arg->data);
+                    free(arg);
                     exit_jsh(last_command_return);
                 }
                 else if (arg->len == 2){
                     int val_exit = atoi(arg->data[1]);
+                    free(line);
+                    //free_argv_data(arg);
+                    free(arg->data);
+                    free(arg);
                     exit_jsh(val_exit);
                 }
                 else{
-                    fprintf(stdout, "exit has at most two arguments\n");
+                    fprintf(stderr, "-bash: exit: too many arguments\n");
                 }
             }
 
@@ -119,7 +132,10 @@ int main(int argc, char *argv[], char *envp[]){
                             fprintf(stderr,"Unknown command\n");
                         }
                     }
-                    free_argv_data(arg);
+                    //free_argv_data(arg);
+                    free(line);
+                    free(arg->data);
+                    free(arg);
                     return 0;
                 }
                     
@@ -131,11 +147,18 @@ int main(int argc, char *argv[], char *envp[]){
                     else {
                         last_command_return = 1;
                     }
+                    free(line);
+                    //free_argv_data(arg);
+                    free(arg->data);
+                    free(arg);
                     break;
                 }
             }
         }
         free(line);
     }
+    //free_argv_data(arg);
+    // free(arg->data);
+    // free(arg);
     return 0;
 }
