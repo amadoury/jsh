@@ -8,7 +8,7 @@ struct argv_t * split(char * line){
     char ** data ;
     int index = 0;
     if (nb_word != 0){
-        data = malloc(sizeof(char *) * (nb_word));
+        data = malloc(sizeof(char *) * (nb_word + 1));
 
         if (data == NULL){
             fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
@@ -49,4 +49,11 @@ int nb_words(char * line){
         }
     }
     return nb_word;
+}
+
+void free_argv_data(struct argv_t * arg){
+    for(int i = 0; i < arg->len; ++i){
+        free(arg->data[i]);
+    }
+    // free(arg);
 }

@@ -6,18 +6,18 @@
 #include "parser.h"
 #include "command.h"
 
-#define SIZE_STR_INPUT 41
+#define SIZE_STR_INPUT 100
 
 int main(int argc, char *argv[], char *envp[]){
 
-    struct argv_t * arg = malloc(sizeof(struct argv_t));
+    struct argv_t * arg;
 
     int nb_jobs = 0;
 
     int last_command_return = 0;
     rl_outstream = stderr;
 
-    do {
+    while(1){
 
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
@@ -45,13 +45,14 @@ int main(int argc, char *argv[], char *envp[]){
         strcat(p, "\001\033[00m\002$ ");
 
         char * line = readline(p);
-        if (line == NULL){
-            exit_jsh(last_command_return);
-        }
     
         free(p);
         free(pwd);
-        if(line == NULL) exit(last_command_return);
+        if(line == NULL){
+            exit_jsh(last_command_return);
+            free(line);
+            free_argv_data(arg);
+            }
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
         add_history(l);
@@ -80,14 +81,19 @@ int main(int argc, char *argv[], char *envp[]){
                 pwd = pwd_jsh();
                 fprintf(stdout, "%s\n",pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
+                free(pwd);
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
                 if (arg->len == 1){
+                    free(line);
+                    free_argv_data(arg);
                     exit_jsh(last_command_return);
                 }
                 else if (arg->len == 2){
                     int val_exit = atoi(arg->data[1]);
+                    free(line);
+                    free_argv_data(arg);
                     exit_jsh(val_exit);
                 }
                 else{
@@ -110,14 +116,18 @@ int main(int argc, char *argv[], char *envp[]){
                 {
                     if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
                         execv(arg->data[0], arg->data);
+                        fprintf(stderr,"bash: ./nonexistent: No such file or directory\n");
+                        
                     }
                     else{
                         int r = execvp(arg->data[0], arg->data);
                         if (r == -1){
-                            fprintf(stdout,"Unknown command\n");
+                            fprintf(stderr,"not-in-path: command not found\n");
                         }
                     }
-                    break;
+                    free(line);
+                    free_argv_data(arg);
+                    return 0;
                 }
                     
                 default:
@@ -128,12 +138,13 @@ int main(int argc, char *argv[], char *envp[]){
                     else {
                         last_command_return = 1;
                     }
+                    free(line);
+                    free_argv_data(arg);
                     break;
                 }
-             }
+            }
         }
     }
-    while(arg->len == 0 || strcmp(arg->data[0], "exit") != 0);
-    
+    free_argv_data(arg);
     return 0;
 }

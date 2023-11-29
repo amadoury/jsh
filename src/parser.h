@@ -12,5 +12,6 @@ struct argv_t{
 
 int nb_words(char *);
 struct argv_t * split(char *);
+void free_argv_data(struct argv_t * arg);
 
 #endif

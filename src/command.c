@@ -32,8 +32,9 @@ char *pwd_jsh()
 int cd(const char *pathname){
     
     char *pwd = pwd_jsh();
-    char *new_last_path = malloc(sizeof(char) * (strlen(pwd + 1)));
+    char *new_last_path = malloc(sizeof(char) * (strlen(pwd) + 1));
     strcpy(new_last_path, pwd);
+    free(pwd);
 
     if(pathname == NULL){
         char *home = getenv("HOME");
