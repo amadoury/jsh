@@ -6,18 +6,18 @@
 #include "parser.h"
 #include "command.h"
 
-#define SIZE_STR_INPUT 41
+#define SIZE_STR_INPUT 100
 
 int main(int argc, char *argv[], char *envp[]){
 
-    struct argv_t * arg = malloc(sizeof(struct argv_t));
+    struct argv_t * arg;
 
     int nb_jobs = 0;
 
     int last_command_return = 0;
     rl_outstream = stderr;
 
-    do {
+    while(1){
 
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
@@ -49,16 +49,15 @@ int main(int argc, char *argv[], char *envp[]){
             exit_jsh(last_command_return);
         }
     
+        add_history(line);
         free(p);
         free(pwd);
-        if(line == NULL) exit(last_command_return);
-        char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
-        strcpy(l, line);
-        add_history(l);
-        free(l);
+        // char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
+        // strcpy(l, line);
+        // free(l);
 
         arg = split(line);
-        
+        //free(line);
     
         if (arg->len != 0){
             if (strcmp(arg->data[0], "cd") == 0){
@@ -109,15 +108,19 @@ int main(int argc, char *argv[], char *envp[]){
                 case 0 :
                 {
                     if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
-                        execv(arg->data[0], arg->data);
+                        int r = execv(arg->data[0], arg->data);
+                        if (r == -1){
+                            fprintf(stderr,"Unknown command\n");
+                        } 
                     }
                     else{
                         int r = execvp(arg->data[0], arg->data);
                         if (r == -1){
-                            fprintf(stdout,"Unknown command\n");
+                            fprintf(stderr,"Unknown command\n");
                         }
                     }
-                    break;
+                    free_argv_data(arg);
+                    return 0;
                 }
                     
                 default:
@@ -130,10 +133,9 @@ int main(int argc, char *argv[], char *envp[]){
                     }
                     break;
                 }
-             }
+            }
         }
+        free(line);
     }
-    while(arg->len == 0 || strcmp(arg->data[0], "exit") != 0);
-    
     return 0;
 }
