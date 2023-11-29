@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define EXIT_VAL 0
-#define MAX_PATH_LENGTH 1024
+#define MAX_PATH_LENGTH 4096
 
 char *last_path;
 
@@ -32,8 +32,9 @@ char *pwd_jsh()
 int cd(const char *pathname){
     
     char *pwd = pwd_jsh();
-    char *new_last_path = malloc(sizeof(char) * (strlen(pwd + 1)));
+    char *new_last_path = malloc(sizeof(char) * (strlen(pwd) + 1));
     strcpy(new_last_path, pwd);
+    free(pwd);
 
     if(pathname == NULL){
         char *home = getenv("HOME");
