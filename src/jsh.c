@@ -44,33 +44,35 @@ int main(int argc, char *argv[], char *envp[]){
 
         strcat(p, "\001\033[00m\002$ ");
 
+        waitpid(-1, NULL, WNOHANG);
+
         char * line = readline(p);
-    
         free(p);
         free(pwd);
-        if(line == NULL){
+        if (line == NULL){
             exit_jsh(last_command_return);
-            }
+        }
+    
+
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
         add_history(l);
         free(l);
 
         arg = split(line);
-        
     
         if (arg->len != 0){
             if (strcmp(arg->data[0], "cd") == 0){
                 if (arg->len == 1){
                     last_command_return = cd(NULL);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "bash: cd: NONEXISTENT: No such file or directory\n");
+                        fprintf(rl_outstream, "No such file or directory\n");
                     }
                 }
                 else{
                     last_command_return = cd(arg->data[1]);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "bash: cd: NONEXISTENT: No such file or directory\n");
+                        fprintf(rl_outstream, "bash: cd: %s: No such file or directory\n", arg->data[0]);
                     }
                 }
             }
@@ -83,8 +85,7 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
-                if (arg->len == 1){                    
-                    // free_argv_data(arg);
+                if (arg->len == 1){
                     free(arg->data);
                     free(arg);
                     free(line);
@@ -92,14 +93,13 @@ int main(int argc, char *argv[], char *envp[]){
                 }
                 else if (arg->len == 2){
                     int val_exit = atoi(arg->data[1]);
-                    // free_argv_data(arg);
                     free(arg->data);
                     free(arg);
                     free(line);
                     exit_jsh(val_exit);
                 }
                 else{
-                    fprintf(stderr, "-bash: exit: too many arguments\n");
+                    fprintf(stdout, "exit has at most two arguments\n");
                 }
             }
 
@@ -117,18 +117,17 @@ int main(int argc, char *argv[], char *envp[]){
                 case 0 :
                 {
                     if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
-                        execv(arg->data[0], arg->data);
-                        fprintf(stderr,"bash: ./nonexistent: No such file or directory\n");
-                        
+                        int r = execv(arg->data[0], arg->data);
+                        if (r == -1){
+                            fprintf(stderr,"Unknown command\n");
+                        } 
                     }
                     else{
                         int r = execvp(arg->data[0], arg->data);
                         if (r == -1){
-                            fprintf(stderr,"not-in-path: command not found\n");
+                            fprintf(stderr,"Unknown command\n");
                         }
                     }
-                    
-                    // free_argv_data(arg);
                     free(arg->data);
                     free(arg);
                     free(line);
@@ -136,7 +135,8 @@ int main(int argc, char *argv[], char *envp[]){
                 }
                     
                 default:
-                    wait(&status);
+                    if(arg->esp == 0)
+                        waitpid(pids, &status, 0);
                     if (WIFEXITED(status)){
                         last_command_return = WEXITSTATUS(status);
                     }
@@ -146,13 +146,10 @@ int main(int argc, char *argv[], char *envp[]){
                     break;
                 }
             }
-            // free_argv_data(arg);
-            free(arg->data);
-            free(arg);
-            free(line);
-
         }
+        free(arg->data);
+        free(arg);
+        free(line);
     }
-    // free_argv_data(arg);
     return 0;
 }

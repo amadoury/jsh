@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define EXIT_VAL 0
-#define MAX_PATH_LENGTH 1024
+#define MAX_PATH_LENGTH 4096
 
 char *last_path;
 

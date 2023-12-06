@@ -3,6 +3,7 @@
 struct argv_t * split(char * line){
 
     struct argv_t * tab_data = malloc(sizeof(struct argv_t));
+    tab_data->esp = 0;
     int nb_word = nb_words(line);
 
     char ** data ;
@@ -11,20 +12,27 @@ struct argv_t * split(char * line){
         data = malloc(sizeof(char *) * (nb_word + 1));
 
         if (data == NULL){
-            fprintf(stderr, "error with malloc in split %lu\n", nb_word * sizeof(char *));
+            fprintf(stderr, "error with malloc in split\n");
             exit(1);
         }
 
         char * word = strtok(line, " ");
         
         while (word != NULL){
-            data[index] = word;
-            word = strtok(NULL, " ");
-            ++index;
+            if(strcmp(word, "&") == 0){
+                ++tab_data->esp;
+                --nb_word;
+                word = strtok(NULL, " ");
+            }
+            else{
+                data[index] = word;
+                word = strtok(NULL, " ");
+                ++index;
+            }
         }
 
-        tab_data->data = data;
         data[nb_word] = NULL;
+        tab_data->data = data;
         tab_data->len = nb_word;
     }
     else{
@@ -51,9 +59,3 @@ int nb_words(char * line){
     return nb_word;
 }
 
-void free_argv_data(struct argv_t * arg){
-    for(int i = 0; i < arg->len; ++i){
-        free(arg->data[i]);
-    }
-    // free(arg);
-}
