@@ -48,6 +48,8 @@ int main(int argc, char *argv[], char *envp[]){
 
         strcat(p, "\001\033[00m\002$ ");
 
+        waitpid(-1, NULL, WNOHANG);
+
         char * line = readline(p);
         free(p);
         free(pwd);
@@ -112,7 +114,7 @@ int main(int argc, char *argv[], char *envp[]){
 
             else{
 
-                if (is_redirection(arg)){
+                 if (is_redirection(arg)){
                     redirection_1(arg, &last_command_return);
                 }
                 else{
@@ -148,7 +150,6 @@ int main(int argc, char *argv[], char *envp[]){
                             last_command_return = 1;
                         }
                         break;
-                    }
                 }
             }
         }

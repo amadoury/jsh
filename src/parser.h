@@ -9,6 +9,7 @@
 struct argv_t{
     char ** data;
     int len;
+    int esp;
 };
 
 int nb_words(char *);

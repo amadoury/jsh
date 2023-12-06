@@ -3,6 +3,7 @@
 struct argv_t * split(char * line){
 
     struct argv_t * tab_data = malloc(sizeof(struct argv_t));
+    tab_data->esp = 0;
     int nb_word = nb_words(line);
 
     char ** data ;
@@ -18,9 +19,16 @@ struct argv_t * split(char * line){
         char * word = strtok(line, " ");
         
         while (word != NULL){
-            data[index] = word;
-            word = strtok(NULL, " ");
-            ++index;
+            if(strcmp(word, "&") == 0){
+                ++tab_data->esp;
+                --nb_word;
+                word = strtok(NULL, " ");
+            }
+            else{
+                data[index] = word;
+                word = strtok(NULL, " ");
+                ++index;
+            }
         }
 
         data[nb_word] = NULL;
@@ -49,13 +57,6 @@ int nb_words(char * line){
         }
     }
     return nb_word;
-}
-
-void free_argv_data(struct argv_t * arg){
-    for(int i = 0; i < arg->len; ++i){
-        free(arg->data[i]);
-    }
-    // free(arg);
 }
 
 bool is_redirection(struct argv_t * arg){
