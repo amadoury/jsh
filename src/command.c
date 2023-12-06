@@ -2,6 +2,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <errno.h> 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>     
+#include "parser.h"
 
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 4096
@@ -69,4 +76,40 @@ int cd(const char *pathname){
     }
     
     return 0;
+}
+
+void redirection_1(struct argv_t * arg, int * last_return){
+    int fd_file = open(arg->data[2], O_RDONLY);
+    if (fd_file == -1){
+        if (errno == ENOENT){
+            fprintf(stderr, "%s: No such file or directory\n", arg->data[2]);
+        }
+        else{
+            fprintf(stdout, "Error open file\n");
+        }
+    }
+    else{
+        int status;
+        pid_t pids = fork();
+        switch(pids){
+            case 0:
+                dup2(fd_file,STDIN_FILENO);
+                close(fd_file);
+                execlp(arg->data[0], arg->data[0], NULL);
+                exit(1);
+            default:
+            wait(pids,&status,0);
+            if (WIFEXITED(status)){
+                *last_return = WEXITSTATUS(status);
+            }
+            else {
+                *last_return = 1;
+            }
+            break;
+        }
+    }
+}
+
+void redirection_2(struct argv_t * arg, int * last_return){
+
 }

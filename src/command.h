@@ -11,6 +11,7 @@ void exit_jsh(int);
 int cd(const char *);
 
 char * pwd_jsh();
+void redirection_1(struct argv_t *, int *);
 
 
 #endif

@@ -3,6 +3,10 @@
 #include <readline/history.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "parser.h"
 #include "command.h"
 
@@ -108,39 +112,43 @@ int main(int argc, char *argv[], char *envp[]){
 
             else{
 
-                pid_t pids = fork();
-                int status;
-                switch (pids)
-                {
-                case 0 :
-                {
-                    if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
-                        int r = execv(arg->data[0], arg->data);
-                        if (r == -1){
-                            fprintf(stderr,"Unknown command\n");
-                        } 
-                    }
-                    else{
-                        int r = execvp(arg->data[0], arg->data);
-                        if (r == -1){
-                            fprintf(stderr,"Unknown command\n");
-                        }
-                    }
-                    free(arg->data);
-                    free(arg);
-                    free(line);
-                    return 0;
+                if (is_redirection(arg)){
+                    redirection_1(arg, &last_command_return);
                 }
-                    
-                default:
-                    wait(&status);
-                    if (WIFEXITED(status)){
-                        last_command_return = WEXITSTATUS(status);
+                else{
+                    pid_t pids = fork();
+                    int status;
+                    switch (pids)
+                    {
+                    case 0 :
+                    {
+                        if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
+                            int r = execv(arg->data[0], arg->data);
+                            if (r == -1){
+                                fprintf(stderr,"Unknown command\n");
+                            } 
+                        }
+                        else{
+                            int r = execvp(arg->data[0], arg->data);
+                            if (r == -1){
+                                fprintf(stderr,"Unknown command\n");
+                            }
+                        }
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        return 0;
+                    }        
+                    default:
+                        wait(&status);
+                        if (WIFEXITED(status)){
+                            last_command_return = WEXITSTATUS(status);
+                        }
+                        else {
+                            last_command_return = 1;
+                        }
+                        break;
                     }
-                    else {
-                        last_command_return = 1;
-                    }
-                    break;
                 }
             }
         }

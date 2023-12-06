@@ -57,3 +57,19 @@ void free_argv_data(struct argv_t * arg){
     }
     // free(arg);
 }
+
+bool is_redirection(struct argv_t * arg){
+    if (arg->len == 3){
+        if (strcmp(arg->data[1],"<") == 0 || strcmp(arg->data[1],">") == 0 || strcmp(arg->data[1],">|") == 0
+        || strcmp(arg->data[1],">>") == 0 || strcmp(arg->data[1],"2>") == 0 || strcmp(arg->data[1],"2>|") == 0
+        || strcmp(arg->data[1],"2>>") == 0 || strcmp(arg->data[1],"|") == 0 || strcmp(arg->data[1],"<(") == 0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    else{
+        return false;
+    }
+}
