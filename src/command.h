@@ -7,11 +7,8 @@
 #include <unistd.h>
 
 void exit_jsh(int);
-
 int cd(const char *);
-
 char * pwd_jsh();
-void redirection_1(struct argv_t *, int *);
-
+void redirection(struct argv_t *, int *, int, int, int,int);
 
 #endif
