@@ -90,7 +90,7 @@ void redirection(struct argv_t * arg, int * last_return, int redir, int mode, in
 
     if (fd_file == -1){
         if (errno == ENOENT){
-            fprintf(stderr, "%s: No Suck File or Directory\n", arg->data[redir + 1]);
+            fprintf(stderr, "%s: No Such File or Directory\n", arg->data[redir + 1]);
         }
         if (errno == EEXIST){
             fprintf(stderr, "%s: File already exist\n", arg->data[redir + 1]);
