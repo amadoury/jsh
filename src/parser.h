@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 struct argv_t{
     char ** data;
@@ -13,6 +14,8 @@ struct argv_t{
 
 int nb_words(char *);
 struct argv_t * split(char *);
-void free_argv_data(struct argv_t *);
+int is_redirection(struct argv_t *);
+int which_redirection(struct argv_t *);
+struct argv_t * data_cmd(struct argv_t *,int);
 
 #endif

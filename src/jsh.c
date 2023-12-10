@@ -3,6 +3,10 @@
 #include <readline/history.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <signal.h>
 #include "parser.h"
 #include "command.h"
@@ -120,45 +124,64 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else{
-
-                pid_t pids = fork();
-                int status;
-                
-                switch (pids)
-                {
-                case 0 :
-                {
-                    if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
-                        int r = execv(arg->data[0], arg->data);
-                        if (r == -1){
-                            fprintf(stderr,"Unknown command\n");
-                        } 
+                int redirec = is_redirection(arg);
+                if (redirec){
+                    int nb_redir = which_redirection(arg);
+                    if (nb_redir == 1){
+                        redirection(arg, &last_command_return,redirec,0,O_RDONLY,1);
                     }
-                    else{
-                        int r = execvp(arg->data[0], arg->data);
-                        if (r == -1){
-                            fprintf(stderr,"Unknown command\n");
-                        }
+                    if (nb_redir == 2 || nb_redir == 5){
+                        int option = O_WRONLY | O_EXCL | O_CREAT;
+                        redirection(arg, &last_command_return, redirec,1,option,nb_redir);
                     }
-                    free(arg->data);
-                    free(arg);
-                    free(line);
-                    free(l);
-                    return 0;
+                    if (nb_redir == 3 || nb_redir == 6){
+                        int option = O_WRONLY | O_CREAT | O_TRUNC;
+                        redirection(arg, &last_command_return, redirec,1,option,nb_redir);
+                    }
+                    if (nb_redir == 4 || nb_redir == 7){
+                        int option = O_WRONLY | O_CREAT | O_APPEND;
+                        redirection(arg, &last_command_return, redirec,1,option,nb_redir);   
+                    }
                 }
+                else{
+                    pid_t pids = fork();
+                    int status;
                     
-                default:
-                    add_job(pids, l);
+                switch (pids)
+                    {
+                    case 0 :
+                    {
+                        if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
+                            int r = execv(arg->data[0], arg->data);
+                            if (r == -1){
+                                fprintf(stderr,"Unknown command\n");
+                            } 
+                        }
+                        else{
+                            int r = execvp(arg->data[0], arg->data);
+                            if (r == -1){
+                                fprintf(stderr,"Unknown command\n");
+                            }
+                        }
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                    return 0;
+                    }        
+                    default:
+                        add_job(pids, l);
                     
                     if(arg->esp == 0)
-                        waitpid(pids, &status, 0);
-                    if (WIFEXITED(status)){
-                        last_command_return = WEXITSTATUS(status);
+                            waitpid(pids,&status,0);
+                        if (WIFEXITED(status)){
+                            last_command_return = WEXITSTATUS(status);
+                        }
+                        else {
+                            last_command_return = 1;
+                        }
+                        break;
                     }
-                    else {
-                        last_command_return = 1;
-                    }
-                    break;
                 }
             }
         }

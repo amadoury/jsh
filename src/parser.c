@@ -39,6 +39,14 @@ struct argv_t * split(char * line){
         tab_data->len = 0;
         tab_data->data = NULL;
     }
+
+    // for(int i = 0; i< nb_word; ++i){
+    //     if (data[i] != NULL){
+    //         printf("%s\n", data[i]);
+    //     }
+    //     else
+    //         printf("NULL\n");
+    // }
     
     return tab_data;
 }
@@ -59,3 +67,55 @@ int nb_words(char * line){
     return nb_word;
 }
 
+int is_redirection(struct argv_t * arg){
+    if (arg->len >= 3){ 
+        for(int i = 1; i < arg->len; ++i){
+            if (strcmp(arg->data[i],"<") == 0 || strcmp(arg->data[i],">") == 0 || strcmp(arg->data[i],">|") == 0
+            || strcmp(arg->data[i],">>") == 0 || strcmp(arg->data[i],"2>") == 0 || strcmp(arg->data[i],"2>|") == 0
+            || strcmp(arg->data[i],"2>>") == 0 || strcmp(arg->data[i],"|") == 0 || strcmp(arg->data[i],"<(") == 0){
+                return i;
+            }
+        }   
+    }
+    return 0;
+}
+
+int which_redirection(struct argv_t * arg){
+    if (arg->len >= 3){ 
+        for(int i = 1; i < arg->len; ++i){
+            if (strcmp(arg->data[i],"<") == 0) 
+                return 1;
+            if (strcmp(arg->data[i],">") == 0)
+                return 2;
+            if (strcmp(arg->data[i],">|") == 0)
+                return 3;
+            if(strcmp(arg->data[i],">>") == 0)
+                return 4;
+            if(strcmp(arg->data[i],"2>") == 0)
+                return 5;
+            if(strcmp(arg->data[i],"2>|") == 0)
+                return 6;
+            if(strcmp(arg->data[i],"2>>") == 0)
+                return 7;
+            if(strcmp(arg->data[i],"|") == 0)
+                return 8;
+            if(strcmp(arg->data[i],"<(") == 0)
+                return 9;
+        }   
+    }
+    return 0;
+}
+
+struct argv_t * data_cmd(struct argv_t * arg,int redir){
+    struct argv_t * arg_cmd = malloc(sizeof(struct argv_t));
+    char ** data_cmd = malloc(sizeof(char *) * (redir + 1));
+    for(int i = 0; i < redir; ++i){
+        data_cmd[i] = arg->data[i] ;
+    }
+    data_cmd[redir] = NULL;
+
+    arg_cmd->data = data_cmd;
+    arg_cmd->len = redir;
+
+    return arg_cmd;
+}

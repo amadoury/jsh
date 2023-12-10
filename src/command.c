@@ -2,8 +2,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 #include <sys/wait.h>
-
+#include <fcntl.h>
+#include "parser.h"
+ 
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 4096
 
@@ -81,10 +84,64 @@ int cd(const char *pathname){
     return 0;
 }
 
-// void jobs(){
+/* for redirection */
+void redirection(struct argv_t * arg, int * last_return, int redir, int mode, int option, int nb_redir){
+    int fd_file ;
+    if (mode){
+        fd_file = open(arg->data[redir + 1], option, 0664);
+    }
+    else {
+        fd_file = open(arg->data[redir + 1], option);
+    }
 
+    if (fd_file == -1){
+        if (errno == ENOENT){
+            fprintf(stderr, "%s: No Such File or Directory\n", arg->data[redir + 1]);
+        }
+        if (errno == EEXIST){
+            fprintf(stderr, "%s: File already exist\n", arg->data[redir + 1]);
+        }
+        else{
+            fprintf(stdout, "Error open file\n");
+        }
+    }
+    else{
+        int status;
+        pid_t pids = fork();
+        switch(pids){
+            case 0:
+                if (nb_redir == 1){
+                    dup2(fd_file,STDIN_FILENO);
+                    close(fd_file);
+                }
+                if (nb_redir == 2 || nb_redir == 3 || nb_redir == 4){
+                    dup2(fd_file, STDOUT_FILENO);
+                    close(fd_file); 
+                }
+                if (nb_redir == 5 || nb_redir == 6 || nb_redir == 7){
+                    dup2(fd_file, STDERR_FILENO);
+                    close(fd_file);
+                }   
 
-// }
+                struct argv_t * arg_cmd = data_cmd(arg,redir);
+                int r = execvp(arg_cmd->data[0], arg_cmd->data);
+                if (r == -1){
+                    fprintf(stdout, "Unknown command\n");
+                }
+                exit(1);
+            default:
+            waitpid(pids,&status,0);
+            if (WIFEXITED(status)){
+                *last_return = WEXITSTATUS(status);
+            }
+            else {
+                *last_return = 1;
+            }
+            break;
+        }
+    }
+}
+
 void add_job(int pid, char *name){
 
     jobs[jobs_nb] = malloc(sizeof(struct job));
