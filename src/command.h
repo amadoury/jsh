@@ -12,5 +12,12 @@ int cd(const char *);
 
 char * pwd_jsh();
 
+void add_job(int, char *);
+
+void remove_jobs();
+
+void remove_invalid_command(pid_t *);
+
+void print_jobs();
 
 #endif

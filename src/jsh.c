@@ -3,10 +3,13 @@
 #include <readline/history.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "parser.h"
 #include "command.h"
 
 #define SIZE_STR_INPUT 100
+
+
 
 int main(int argc, char *argv[], char *envp[]){
 
@@ -16,6 +19,8 @@ int main(int argc, char *argv[], char *envp[]){
 
     int last_command_return = 0;
     rl_outstream = stderr;
+
+    
 
     while(1){
 
@@ -44,7 +49,8 @@ int main(int argc, char *argv[], char *envp[]){
 
         strcat(p, "\001\033[00m\002$ ");
 
-        waitpid(-1, NULL, WNOHANG);
+        // waitpid(-1, NULL, WNOHANG);
+        remove_jobs();
 
         char * line = readline(p);
         free(p);
@@ -57,7 +63,6 @@ int main(int argc, char *argv[], char *envp[]){
         char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
         strcpy(l, line);
         add_history(l);
-        free(l);
 
         arg = split(line);
     
@@ -89,6 +94,7 @@ int main(int argc, char *argv[], char *envp[]){
                     free(arg->data);
                     free(arg);
                     free(line);
+                    free(l);
                     exit_jsh(last_command_return);
                 }
                 else if (arg->len == 2){
@@ -96,11 +102,16 @@ int main(int argc, char *argv[], char *envp[]){
                     free(arg->data);
                     free(arg);
                     free(line);
+                    free(l);
                     exit_jsh(val_exit);
                 }
                 else{
                     fprintf(stdout, "exit has at most two arguments\n");
                 }
+            }
+
+            else if (strcmp(arg->data[0], "jobs") == 0){
+                print_jobs();
             }
 
             else if (strcmp(arg->data[0], "?") == 0){
@@ -112,6 +123,7 @@ int main(int argc, char *argv[], char *envp[]){
 
                 pid_t pids = fork();
                 int status;
+                
                 switch (pids)
                 {
                 case 0 :
@@ -131,10 +143,13 @@ int main(int argc, char *argv[], char *envp[]){
                     free(arg->data);
                     free(arg);
                     free(line);
+                    free(l);
                     return 0;
                 }
                     
                 default:
+                    add_job(pids, l);
+                    
                     if(arg->esp == 0)
                         waitpid(pids, &status, 0);
                     if (WIFEXITED(status)){
@@ -150,6 +165,7 @@ int main(int argc, char *argv[], char *envp[]){
         free(arg->data);
         free(arg);
         free(line);
+        free(l);
     }
     return 0;
 }
