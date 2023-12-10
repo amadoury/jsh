@@ -21,6 +21,8 @@ struct job {
 struct job *jobs[512];
 int jobs_nb = 0;
 
+pid_t job_to_remove;
+
 void exit_jsh(int val)
 {
     exit(val);
@@ -158,12 +160,11 @@ void remove_jobs(){
         int status = 0;
         if(jobs[i] != NULL){
             if(waitpid(jobs[i]->id, &status, WNOHANG) > 0){
-                if(WIFEXITED(status)){
-                    free(jobs[i]->name);
-                    free(jobs[i]);
-                    jobs[i] = NULL;
-                    if(i == jobs_nb-1)
-                        --jobs_nb;
+                if(WIFEXITED(status) || WIFSIGNALED(status)){
+                    jobs[i]->state = "Done   ";
+                }
+                if(WIFSTOPPED(status)){
+                    jobs[i]->state = "Stopped";
                 }
             }
             
@@ -171,10 +172,14 @@ void remove_jobs(){
     }
 }
 
-void remove_invalid_command(pid_t *pid){
+void add_job_to_remove(pid_t pid){
+    job_to_remove = pid;
+}
 
+void remove_invalid_command(){
+    printf("removing %d\n", job_to_remove);
     for(int i = 0 ; i < jobs_nb ; ++i){
-        if(jobs[i] != NULL && jobs[i]->id == *pid){
+        if(jobs[i] != NULL && jobs[i]->id == job_to_remove){
             free(jobs[i]->name);
             free(jobs[i]);
             jobs[i] = NULL;
@@ -187,7 +192,20 @@ void remove_invalid_command(pid_t *pid){
 void print_jobs(){
 
     for(int i = 0 ; i < jobs_nb ; ++i){
-        if(jobs[i] != NULL)
+        if(jobs[i] != NULL){
             fprintf(stdout, "[%d] %d  %s  %s\n", i+1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
+            if(strcmp(jobs[i]->state, "Done   ") == 0){
+                free(jobs[i]->name);
+                free(jobs[i]);
+                jobs[i] = NULL;
+                if(i == jobs_nb-1){
+                    int j = i;
+                    while(j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0))){
+                        --jobs_nb;
+                        --j;
+                    }
+                }
+            }
+        }
     }
 }

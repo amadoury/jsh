@@ -13,8 +13,6 @@
 
 #define SIZE_STR_INPUT 100
 
-
-
 int main(int argc, char *argv[], char *envp[]){
 
     struct argv_t * arg;
@@ -23,8 +21,6 @@ int main(int argc, char *argv[], char *envp[]){
 
     int last_command_return = 0;
     rl_outstream = stderr;
-
-    
 
     while(1){
 
@@ -53,7 +49,6 @@ int main(int argc, char *argv[], char *envp[]){
 
         strcat(p, "\001\033[00m\002$ ");
 
-        // waitpid(-1, NULL, WNOHANG);
         remove_jobs();
 
         char * line = readline(p);
@@ -167,12 +162,13 @@ int main(int argc, char *argv[], char *envp[]){
                         free(arg);
                         free(line);
                         free(l);
-                    return 0;
+                        // add_job_to_remove(getpid());
+                        return 0;
                     }        
                     default:
                         add_job(pids, l);
                     
-                    if(arg->esp == 0)
+                        if(arg->esp == 0)
                             waitpid(pids,&status,0);
                         if (WIFEXITED(status)){
                             last_command_return = WEXITSTATUS(status);
