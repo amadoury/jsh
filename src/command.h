@@ -18,8 +18,12 @@ void add_job(int, char *);
 
 void remove_jobs();
 
-void remove_invalid_command(pid_t *);
+void add_job_to_remove(pid_t);
+
+void remove_invalid_command();
 
 void print_jobs();
+
+void signaux();
 
 #endif

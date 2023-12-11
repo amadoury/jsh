@@ -13,9 +13,9 @@
 
 #define SIZE_STR_INPUT 100
 
-
-
 int main(int argc, char *argv[], char *envp[]){
+
+    signaux();
 
     struct argv_t * arg;
 
@@ -23,8 +23,6 @@ int main(int argc, char *argv[], char *envp[]){
 
     int last_command_return = 0;
     rl_outstream = stderr;
-
-    
 
     while(1){
 
@@ -53,7 +51,6 @@ int main(int argc, char *argv[], char *envp[]){
 
         strcat(p, "\001\033[00m\002$ ");
 
-        // waitpid(-1, NULL, WNOHANG);
         remove_jobs();
 
         char * line = readline(p);
@@ -94,23 +91,29 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
-                if (arg->len == 1){
-                    free(arg->data);
-                    free(arg);
-                    free(line);
-                    free(l);
-                    exit_jsh(last_command_return);
-                }
-                else if (arg->len == 2){
-                    int val_exit = atoi(arg->data[1]);
-                    free(arg->data);
-                    free(arg);
-                    free(line);
-                    free(l);
-                    exit_jsh(val_exit);
+                if(nb_jobs == 0){
+                    if (arg->len == 1){
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                        exit_jsh(last_command_return);
+                    }
+                    else if (arg->len == 2){
+                        int val_exit = atoi(arg->data[1]);
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                        exit_jsh(val_exit);
+                    }
+                    else{
+                        fprintf(stdout, "exit has at most two arguments\n");
+                    }
                 }
                 else{
-                    fprintf(stdout, "exit has at most two arguments\n");
+                    fprintf(stdout, "There are still jobs running\n");
+                    last_command_return = 1;
                 }
             }
 
@@ -167,12 +170,13 @@ int main(int argc, char *argv[], char *envp[]){
                         free(arg);
                         free(line);
                         free(l);
-                    exit(1);
+                        // add_job_to_remove(getpid());
+                        return 0;
                     }        
                     default:
                         add_job(pids, l);
                     
-                    if(arg->esp == 0)
+                        if(arg->esp == 0)
                             waitpid(pids,&status,0);
                         if (WIFEXITED(status)){
                             last_command_return = WEXITSTATUS(status);
