@@ -69,13 +69,13 @@ int main(int argc, char *argv[], char *envp[]){
                 if (arg->len == 1){
                     last_command_return = cd(NULL);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "No such file or directory\n");
+                        fprintf(stderr, "No such file or directory\n");
                     }
                 }
                 else{
                     last_command_return = cd(arg->data[1]);
                     if (last_command_return == 1){
-                        fprintf(rl_outstream, "bash: cd: %s: No such file or directory\n", arg->data[0]);
+                        fprintf(stderr, "bash: cd: %s: No such file or directory\n", arg->data[0]);
                     }
                 }
             }
@@ -88,7 +88,7 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
-                if(nb_jobs == 0){
+                if(get_nb_jobs() == 0){
                     if (arg->len == 1){
                         free(arg->data);
                         free(arg);
@@ -105,11 +105,11 @@ int main(int argc, char *argv[], char *envp[]){
                         exit_jsh(val_exit);
                     }
                     else{
-                        fprintf(stdout, "exit has at most two arguments\n");
+                        fprintf(stderr, "exit has at most two arguments\n");
                     }
                 }
                 else{
-                    fprintf(stdout, "There are still jobs running\n");
+                    fprintf(stderr, "There are still jobs running\n");
                     last_command_return = 1;
                 }
             }

@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "parser.h"
  
 #define EXIT_VAL 0
