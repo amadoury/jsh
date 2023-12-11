@@ -19,8 +19,6 @@ int main(int argc, char *argv[], char *envp[]){
 
     struct argv_t * arg;
 
-    int nb_jobs = 0;
-
     int last_command_return = 0;
     rl_outstream = stderr;
 
@@ -35,7 +33,7 @@ int main(int argc, char *argv[], char *envp[]){
         *p = '\0';
         strcat(p, "\001\033[32m\002[");
         char *nb_jobs_tab = malloc(sizeof(char) * 2);
-        nb_jobs_tab[0] = nb_jobs + '0';
+        nb_jobs_tab[0] = get_nb_jobs() + '0';
         nb_jobs_tab[1] = '\0';
         strcat(p, nb_jobs_tab);
         free(nb_jobs_tab);
@@ -51,7 +49,6 @@ int main(int argc, char *argv[], char *envp[]){
 
         strcat(p, "\001\033[00m\002$ ");
 
-        remove_jobs();
 
         char * line = readline(p);
         free(p);
@@ -118,6 +115,7 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else if (strcmp(arg->data[0], "jobs") == 0){
+                remove_jobs();
                 print_jobs();
             }
 
@@ -171,13 +169,14 @@ int main(int argc, char *argv[], char *envp[]){
                         free(line);
                         free(l);
                         // add_job_to_remove(getpid());
-                        return 0;
+                        exit(1);
                     }        
                     default:
-                        add_job(pids, l);
                     
                         if(arg->esp == 0)
                             waitpid(pids,&status,0);
+                        else
+                            add_job(pids, l);
                         if (WIFEXITED(status)){
                             last_command_return = WEXITSTATUS(status);
                         }

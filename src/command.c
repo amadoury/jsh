@@ -210,6 +210,10 @@ void print_jobs(){
     }
 }
 
+int get_nb_jobs(){
+    return jobs_nb;
+}
+
 void signaux(){
     struct sigaction actINTbash, actTERMbash;
 
