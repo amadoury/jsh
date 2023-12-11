@@ -167,7 +167,7 @@ int main(int argc, char *argv[], char *envp[]){
                         free(arg);
                         free(line);
                         free(l);
-                    return 0;
+                    exit(1);
                     }        
                     default:
                         add_job(pids, l);
