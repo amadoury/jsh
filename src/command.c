@@ -209,3 +209,16 @@ void print_jobs(){
         }
     }
 }
+
+void signaux(){
+    struct sigaction actINTbash, actTERMbash;
+
+    memset(&actINTbash, 0, sizeof(actINTbash));
+    memset(&actTERMbash, 0, sizeof(actTERMbash));
+
+    actINTbash.sa_handler = SIG_IGN;
+    actTERMbash.sa_handler = SIG_IGN;
+
+    sigaction(SIGINT, &actINTbash, NULL);
+    sigaction(SIGTERM, &actTERMbash, NULL);
+}

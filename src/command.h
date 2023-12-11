@@ -24,4 +24,6 @@ void remove_invalid_command();
 
 void print_jobs();
 
+void signaux();
+
 #endif
