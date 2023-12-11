@@ -26,4 +26,6 @@ void print_jobs();
 
 int get_nb_jobs();
 
+void signaux();
+
 #endif

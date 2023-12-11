@@ -15,6 +15,8 @@
 
 int main(int argc, char *argv[], char *envp[]){
 
+    signaux();
+
     struct argv_t * arg;
 
     int last_command_return = 0;
@@ -86,23 +88,29 @@ int main(int argc, char *argv[], char *envp[]){
             }
 
             else if (strcmp(arg->data[0], "exit") == 0){
-                if (arg->len == 1){
-                    free(arg->data);
-                    free(arg);
-                    free(line);
-                    free(l);
-                    exit_jsh(last_command_return);
-                }
-                else if (arg->len == 2){
-                    int val_exit = atoi(arg->data[1]);
-                    free(arg->data);
-                    free(arg);
-                    free(line);
-                    free(l);
-                    exit_jsh(val_exit);
+                if(nb_jobs == 0){
+                    if (arg->len == 1){
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                        exit_jsh(last_command_return);
+                    }
+                    else if (arg->len == 2){
+                        int val_exit = atoi(arg->data[1]);
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                        exit_jsh(val_exit);
+                    }
+                    else{
+                        fprintf(stdout, "exit has at most two arguments\n");
+                    }
                 }
                 else{
-                    fprintf(stdout, "exit has at most two arguments\n");
+                    fprintf(stdout, "There are still jobs running\n");
+                    last_command_return = 1;
                 }
             }
 
