@@ -6,16 +6,23 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-struct argv_t{
-    char ** data;
+struct argv_t
+{
+    char **data;
     int len;
     int esp;
 };
 
 int nb_words(char *);
-struct argv_t * split(char *);
+
+struct argv_t *split(char *);
+
 int is_redirection(struct argv_t *);
+
 int which_redirection(struct argv_t *);
-struct argv_t * data_cmd(struct argv_t *,int);
+
+struct argv_t *data_cmd(struct argv_t *, int);
+
+int contient_perluette(struct argv_t *);
 
 #endif

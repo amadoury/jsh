@@ -28,4 +28,6 @@ int get_nb_jobs();
 
 void signaux();
 
+void commande_arr_plan(struct argv_t *);
+
 #endif

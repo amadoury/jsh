@@ -7,13 +7,14 @@
 #include <fcntl.h>
 #include <signal.h>
 #include "parser.h"
- 
+
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 4096
 
 char *last_path;
 
-struct job {
+struct job
+{
     int id;
     char *state;
     char *name;
@@ -45,16 +46,19 @@ char *pwd_jsh()
     return pwd;
 }
 
-int cd(const char *pathname){
-    
+int cd(const char *pathname)
+{
+
     char *pwd = pwd_jsh();
     char *new_last_path = malloc(sizeof(char) * (strlen(pwd) + 1));
     strcpy(new_last_path, pwd);
     free(pwd);
 
-    if(pathname == NULL){
+    if (pathname == NULL)
+    {
         char *home = getenv("HOME");
-        if(home == NULL || chdir(home) == -1){
+        if (home == NULL || chdir(home) == -1)
+        {
             free(new_last_path);
             return 1;
         }
@@ -63,9 +67,12 @@ int cd(const char *pathname){
         return 0;
     }
 
-    if(strcmp(pathname, "-") == 0){
-        if(last_path != NULL){
-            if(chdir(last_path) == -1){
+    if (strcmp(pathname, "-") == 0)
+    {
+        if (last_path != NULL)
+        {
+            if (chdir(last_path) == -1)
+            {
                 free(new_last_path);
                 return 1;
             }
@@ -74,70 +81,87 @@ int cd(const char *pathname){
         }
         return 0;
     }
-    
-    if(chdir(pathname) == -1){
+
+    if (chdir(pathname) == -1)
+    {
         free(new_last_path);
         return 1;
     }
-    else{
+    else
+    {
         free(last_path);
         last_path = new_last_path;
     }
-    
+
     return 0;
 }
 
 /* for redirection */
-void redirection(struct argv_t * arg, int * last_return, int redir, int mode, int option, int nb_redir){
-    int fd_file ;
-    if (mode){
+void redirection(struct argv_t *arg, int *last_return, int redir, int mode, int option, int nb_redir)
+{
+    int fd_file;
+    if (mode)
+    {
         fd_file = open(arg->data[redir + 1], option, 0664);
     }
-    else {
+    else
+    {
         fd_file = open(arg->data[redir + 1], option);
     }
 
-    if (fd_file == -1){
-        if (errno == ENOENT){
+    if (fd_file == -1)
+    {
+        if (errno == ENOENT)
+        {
             fprintf(stderr, "%s: No Such File or Directory\n", arg->data[redir + 1]);
         }
-        if (errno == EEXIST){
+        if (errno == EEXIST)
+        {
             fprintf(stderr, "%s: File already exist\n", arg->data[redir + 1]);
         }
-        else{
+        else
+        {
             fprintf(stdout, "Error open file\n");
         }
     }
-    else{
+    else
+    {
         int status;
         pid_t pids = fork();
-        switch(pids){
-            case 0:
-                if (nb_redir == 1){
-                    dup2(fd_file,STDIN_FILENO);
-                    close(fd_file);
-                }
-                if (nb_redir == 2 || nb_redir == 3 || nb_redir == 4){
-                    dup2(fd_file, STDOUT_FILENO);
-                    close(fd_file); 
-                }
-                if (nb_redir == 5 || nb_redir == 6 || nb_redir == 7){
-                    dup2(fd_file, STDERR_FILENO);
-                    close(fd_file);
-                }   
+        switch (pids)
+        {
+        case 0:
+            if (nb_redir == 1)
+            {
+                dup2(fd_file, STDIN_FILENO);
+                close(fd_file);
+            }
+            if (nb_redir == 2 || nb_redir == 3 || nb_redir == 4)
+            {
+                dup2(fd_file, STDOUT_FILENO);
+                close(fd_file);
+            }
+            if (nb_redir == 5 || nb_redir == 6 || nb_redir == 7)
+            {
+                dup2(fd_file, STDERR_FILENO);
+                close(fd_file);
+            }
 
-                struct argv_t * arg_cmd = data_cmd(arg,redir);
-                int r = execvp(arg_cmd->data[0], arg_cmd->data);
-                if (r == -1){
-                    fprintf(stdout, "Unknown command\n");
-                }
-                exit(1);
-            default:
-            waitpid(pids,&status,0);
-            if (WIFEXITED(status)){
+            struct argv_t *arg_cmd = data_cmd(arg, redir);
+            int r = execvp(arg_cmd->data[0], arg_cmd->data);
+            if (r == -1)
+            {
+                fprintf(stdout, "Unknown command\n");
+            }
+            exit(1);
+        default:
+            waitpid(pids, &status, 0);
+            if (WIFEXITED(status))
+            {
                 *last_return = WEXITSTATUS(status);
             }
-            else {
+            else
+            {
                 *last_return = 1;
             }
             break;
@@ -145,7 +169,8 @@ void redirection(struct argv_t * arg, int * last_return, int redir, int mode, in
     }
 }
 
-void add_job(int pid, char *name){
+void add_job(int pid, char *name)
+{
 
     jobs[jobs_nb] = malloc(sizeof(struct job));
     jobs[jobs_nb]->id = pid;
@@ -155,53 +180,68 @@ void add_job(int pid, char *name){
     ++jobs_nb;
 }
 
-void remove_jobs(){
+void remove_jobs()
+{
 
-    for(int i = 0 ; i < jobs_nb ; ++i){
+    for (int i = 0; i < jobs_nb; ++i)
+    {
         int status = 0;
-        if(jobs[i] != NULL){
-            if(waitpid(jobs[i]->id, &status, WNOHANG) > 0){
-                if(WIFEXITED(status) || WIFSIGNALED(status)){
+        if (jobs[i] != NULL)
+        {
+            if (waitpid(jobs[i]->id, &status, WNOHANG) > 0)
+            {
+                if (WIFEXITED(status) || WIFSIGNALED(status))
+                {
                     jobs[i]->state = "Done   ";
                 }
-                if(WIFSTOPPED(status)){
+                if (WIFSTOPPED(status))
+                {
                     jobs[i]->state = "Stopped";
                 }
             }
-            
         }
     }
 }
 
-void add_job_to_remove(pid_t pid){
+void add_job_to_remove(pid_t pid)
+{
     job_to_remove = pid;
 }
 
-void remove_invalid_command(){
+void remove_invalid_command()
+{
     printf("removing %d\n", job_to_remove);
-    for(int i = 0 ; i < jobs_nb ; ++i){
-        if(jobs[i] != NULL && jobs[i]->id == job_to_remove){
+    for (int i = 0; i < jobs_nb; ++i)
+    {
+        if (jobs[i] != NULL && jobs[i]->id == job_to_remove)
+        {
             free(jobs[i]->name);
             free(jobs[i]);
             jobs[i] = NULL;
-            if(i == jobs_nb-1)
+            if (i == jobs_nb - 1)
                 --jobs_nb;
         }
     }
 }
 
-void print_jobs(){
+void print_jobs()
+{
 
-    for(int i = 0 ; i < jobs_nb ; ++i){
-        if(jobs[i] != NULL){
-            fprintf(stdout, "[%d] %d  %s  %s\n", i+1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
-            if(strcmp(jobs[i]->state, "Done   ") == 0){
+    for (int i = 0; i < jobs_nb; ++i)
+    {
+        if (jobs[i] != NULL)
+        {
+            fprintf(stdout, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
+            if (strcmp(jobs[i]->state, "Done   ") == 0)
+            {
                 free(jobs[i]->name);
                 free(jobs[i]);
                 jobs[i] = NULL;
-                if(i == jobs_nb-1){
+                if (i == jobs_nb - 1)
+                {
                     int j = i;
-                    while(j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0))){
+                    while (j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0)))
+                    {
                         --jobs_nb;
                         --j;
                     }
@@ -211,11 +251,13 @@ void print_jobs(){
     }
 }
 
-int get_nb_jobs(){
+int get_nb_jobs()
+{
     return jobs_nb;
 }
 
-void signaux(){
+void signaux()
+{
     struct sigaction actINTbash, actTERMbash;
 
     memset(&actINTbash, 0, sizeof(actINTbash));
@@ -226,4 +268,47 @@ void signaux(){
 
     sigaction(SIGINT, &actINTbash, NULL);
     sigaction(SIGTERM, &actTERMbash, NULL);
+}
+
+void commande_arr_plan(struct argv_t *arg)
+{
+    pid_t pid = fork();
+
+    if (pid == -1)
+    {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0)
+    {
+        int devNull = open("/dev/null", O_RDWR);
+        dup2(devNull, STDIN_FILENO);
+        dup2(devNull, STDOUT_FILENO);
+        dup2(devNull, STDERR_FILENO);
+        close(devNull);
+
+        if (arg->data[0][0] == '.' || arg->data[0][0] == '/')
+        {
+            int r = execv(arg->data[0], arg->data);
+            if (r == -1)
+            {
+                fprintf(stderr, "Unknown command\n");
+            }
+        }
+        else
+        {
+            int r = execvp(arg->data[0], arg->data);
+            if (r == -1)
+            {
+                fprintf(stderr, "Unknown command\n");
+            }
+        }
+        perror("execvp");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        add_job(pid, arg->data[0]);
+    }
 }
