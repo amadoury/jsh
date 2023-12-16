@@ -13,4 +13,4 @@ command.o: src/command.c
 	$(CC) $(CCFLAGS) -o command.o -c src/command.c
 
 clean:
-	 rm -f jsh.o parser.o command.o
+	 rm -f jsh.o parser.o command.ohi

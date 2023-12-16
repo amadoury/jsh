@@ -145,46 +145,38 @@ int main(int argc, char *argv[], char *envp[])
 
             else
             {
-                int prlt = contient_perluette(arg);
-                if (prlt == 1)
+                int redirec = is_redirection(arg);
+                if (redirec)
                 {
-                    commande_arr_plan(arg);
+                    int nb_redir = which_redirection(arg);
+                    if (nb_redir == 1)
+                    {
+                        redirection(arg, &last_command_return, redirec, 0, O_RDONLY, 1);
+                    }
+                    if (nb_redir == 2 || nb_redir == 5)
+                    {
+                        int option = O_WRONLY | O_EXCL | O_CREAT;
+                        redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
+                    }
+                    if (nb_redir == 3 || nb_redir == 6)
+                    {
+                        int option = O_WRONLY | O_CREAT | O_TRUNC;
+                        redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
+                    }
+                    if (nb_redir == 4 || nb_redir == 7)
+                    {
+                        int option = O_WRONLY | O_CREAT | O_APPEND;
+                        redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
+                    }
                 }
+
                 else
                 {
+                    pid_t pids = fork();
+                    int status;
 
-                    int redirec = is_redirection(arg);
-                    if (redirec)
+                    switch (pids)
                     {
-                        int nb_redir = which_redirection(arg);
-                        if (nb_redir == 1)
-                        {
-                            redirection(arg, &last_command_return, redirec, 0, O_RDONLY, 1);
-                        }
-                        if (nb_redir == 2 || nb_redir == 5)
-                        {
-                            int option = O_WRONLY | O_EXCL | O_CREAT;
-                            redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
-                        }
-                        if (nb_redir == 3 || nb_redir == 6)
-                        {
-                            int option = O_WRONLY | O_CREAT | O_TRUNC;
-                            redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
-                        }
-                        if (nb_redir == 4 || nb_redir == 7)
-                        {
-                            int option = O_WRONLY | O_CREAT | O_APPEND;
-                            redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
-                        }
-                    }
-
-                    else
-                    {
-                        pid_t pids = fork();
-                        int status;
-
-                        switch (pids)
-                        {
                         case 0:
                         {
                             if (arg->data[0][0] == '.' || arg->data[0][0] == '/')
@@ -192,7 +184,9 @@ int main(int argc, char *argv[], char *envp[])
                                 int r = execv(arg->data[0], arg->data);
                                 if (r == -1)
                                 {
-                                    fprintf(stderr, "Unknown command\n");
+                                    if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                    else
+                                        remove_jobs();
                                 }
                             }
                             else
@@ -200,7 +194,9 @@ int main(int argc, char *argv[], char *envp[])
                                 int r = execvp(arg->data[0], arg->data);
                                 if (r == -1)
                                 {
-                                    fprintf(stderr, "Unknown command\n");
+                                    if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                    else
+                                        remove_jobs();
                                 }
                             }
                             free(arg->data);
@@ -210,7 +206,7 @@ int main(int argc, char *argv[], char *envp[])
                             exit(1);
                         }
                         default:
-
+                        {
                             if (arg->esp == 0)
                                 waitpid(pids, &status, 0);
                             else

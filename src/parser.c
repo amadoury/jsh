@@ -31,10 +31,15 @@ struct argv_t *split(char *line)
             if (strcmp(word, "&") == 0)
             {
                 ++tab_data->esp;
+                word = strtok(NULL, " ");
+                --nb_word;
             }
-            data[index] = word;
-            word = strtok(NULL, " ");
-            ++index;
+            else
+            {
+                data[index] = word;
+                word = strtok(NULL, " ");
+                ++index;
+            }
         }
 
         data[nb_word] = NULL;
@@ -128,21 +133,4 @@ struct argv_t *data_cmd(struct argv_t *arg, int redir)
     arg_cmd->len = redir;
 
     return arg_cmd;
-}
-
-int contient_perluette(struct argv_t *arg)
-{
-    if (arg->len == 1)
-        return 0;
-    if (arg->len == 0)
-        return 0;
-
-    for (int i = 1; i < arg->len; ++i)
-    {
-        if (strcmp(arg->data[i], "&") == 0)
-        {
-            return 1;
-        }
-    }
-    return 0;
 }
