@@ -1,8 +1,0 @@
-{
-    "C_Cpp.errorSquiggles": "disabled",
-    "files.associations": {
-        "typeinfo": "c",
-        "wait.h": "c",
-        "command.h": "c"
-    }
-}

@@ -5,10 +5,12 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "parser.h"
  
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 4096
+#define BLOCK_SIZE 512
 
 char *last_path;
 
@@ -87,24 +89,27 @@ int cd(const char *pathname){
 }
 
 /* for redirection */
-void redirection(struct argv_t * arg, int * last_return, int redir, int mode, int option, int nb_redir){
+void redirection(struct argv_t * arg_cmd, int * last_return, char * file, int mode, int option, int nb_redir, int stdout_jsh, int nbr){
     int fd_file ;
     if (mode){
-        fd_file = open(arg->data[redir + 1], option, 0664);
+        fd_file = open(file, option, 0664);
     }
     else {
-        fd_file = open(arg->data[redir + 1], option);
+        fd_file = open(file, option);
     }
 
     if (fd_file == -1){
         if (errno == ENOENT){
-            fprintf(stderr, "%s: No Such File or Directory\n", arg->data[redir + 1]);
+            fprintf(stderr, "%s: No Such File or Directory\n", file);
+            *last_return = 1;
         }
         if (errno == EEXIST){
-            fprintf(stderr, "%s: File already exist\n", arg->data[redir + 1]);
+            fprintf(stderr, "%s: File already exist\n", file);
+            *last_return = 1;
         }
         else{
             fprintf(stdout, "Error open file\n");
+            *last_return = 1;
         }
     }
     else{
@@ -115,6 +120,9 @@ void redirection(struct argv_t * arg, int * last_return, int redir, int mode, in
                 if (nb_redir == 1){
                     dup2(fd_file,STDIN_FILENO);
                     close(fd_file);
+                    if (nbr >= 2){
+                        dup2(stdout_jsh, STDOUT_FILENO);
+                    }
                 }
                 if (nb_redir == 2 || nb_redir == 3 || nb_redir == 4){
                     dup2(fd_file, STDOUT_FILENO);
@@ -125,10 +133,17 @@ void redirection(struct argv_t * arg, int * last_return, int redir, int mode, in
                     close(fd_file);
                 }   
 
-                struct argv_t * arg_cmd = data_cmd(arg,redir);
-                int r = execvp(arg_cmd->data[0], arg_cmd->data);
-                if (r == -1){
-                    fprintf(stdout, "Unknown command\n");
+                if (arg_cmd->data[0][0] == '.' || arg_cmd->data[0][0] == '/'){
+                    int r = execv(arg_cmd->data[0], arg_cmd->data);
+                    if (r == -1){
+                        fprintf(stderr,"Unknown command\n");
+                    } 
+                }
+                else{
+                    int r = execvp(arg_cmd->data[0], arg_cmd->data);
+                    if (r == -1){
+                        fprintf(stdout, "Unknown command\n");
+                    }
                 }
                 exit(1);
             default:
@@ -140,6 +155,39 @@ void redirection(struct argv_t * arg, int * last_return, int redir, int mode, in
                 *last_return = 1;
             }
             break;
+        }
+    }
+}
+
+void do_read_or_write_to_file(int last_redirec, int new_redirec, char * file_last_redirec, char * file_new_redirec, int stdout_jsh){
+    if (last_redirec == 1 && new_redirec == 1){
+        int fd_file_new_redirec = open(file_new_redirec, O_RDONLY);
+        if (fd_file_new_redirec == -1){
+            if (errno == ENOENT){
+                fprintf(stderr, "No Such File\n");
+            }
+        }
+        else{
+            char buf[BLOCK_SIZE];
+            int nb;
+            while((nb = read(fd_file_new_redirec, buf, BLOCK_SIZE)) > 0){
+                write(1, buf, nb);
+            }
+        }
+    }
+    if (last_redirec == 1 && new_redirec == 2){
+        int fd_file_new_redirec = open(file_new_redirec, O_WRONLY | O_CREAT | O_EXCL | O_APPEND, 0664);
+        if (fd_file_new_redirec == -1){
+            if (errno == EEXIST){
+                fprintf(stderr, "File already exist\n");
+            }
+        }
+        else{
+            char buf[BLOCK_SIZE];
+            int nb;
+            while((nb = read(stdout_jsh, buf, BLOCK_SIZE)) > 0){
+                write(fd_file_new_redirec, buf, nb);
+            }
         }
     }
 }
