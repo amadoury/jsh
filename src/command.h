@@ -28,6 +28,8 @@ int get_nb_jobs();
 
 void signaux();
 
-void commande_arr_plan(struct argv_t *);
+void activate_sig();
+
+int kill_job(int n, int sig);
 
 #endif

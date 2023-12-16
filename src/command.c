@@ -256,16 +256,63 @@ int get_nb_jobs()
     return jobs_nb;
 }
 
+int kill_job(int n, int sig)
+{
+    if(jobs[n - 1] == NULL) return -1;
+    if(kill(jobs[n - 1]->id, sig) == -1)
+        return -1;
+    else
+    {
+        return 0;
+    }
+}
+
 void signaux()
 {
-    struct sigaction actINTbash, actTERMbash;
+    struct sigaction actINTbash, actTERMbash, actTSTPbash;
 
     memset(&actINTbash, 0, sizeof(actINTbash));
     memset(&actTERMbash, 0, sizeof(actTERMbash));
+    memset(&actTSTPbash, 0, sizeof(actTSTPbash));
 
     actINTbash.sa_handler = SIG_IGN;
     actTERMbash.sa_handler = SIG_IGN;
+    actTSTPbash.sa_handler = SIG_IGN;
 
     sigaction(SIGINT, &actINTbash, NULL);
     sigaction(SIGTERM, &actTERMbash, NULL);
+    sigaction(SIGTSTP, &actTSTPbash, NULL);
+}
+
+void sig_job(int sig)
+{
+    for (int i = 0; i < jobs_nb; ++i)
+    {
+        if (jobs[i] != NULL && jobs[i]->id == getpid())
+        {
+            if(sig == 9)
+                jobs[i]->state = "Killed ";
+        }
+    }
+}
+
+void activate_sig()
+{
+    struct sigaction actINTbash, actTERMbash, actTSTPbash, actKILLbash;
+
+    memset(&actINTbash, 0, sizeof(actINTbash));
+    memset(&actTERMbash, 0, sizeof(actTERMbash));
+    memset(&actTSTPbash, 0, sizeof(actTSTPbash));
+    memset(&actKILLbash, 0, sizeof(actKILLbash));
+
+    actINTbash.sa_handler = SIG_DFL;
+    actTERMbash.sa_handler = SIG_DFL;
+    actTSTPbash.sa_handler = sig_job;
+    actKILLbash.sa_handler = sig_job;
+
+    sigaction(SIGINT, &actINTbash, NULL);
+    sigaction(SIGTERM, &actTERMbash, NULL);
+    sigaction(SIGTSTP, &actTSTPbash, NULL);
+    sigaction(SIGKILL, &actKILLbash, NULL);
+
 }

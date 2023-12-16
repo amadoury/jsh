@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <ctype.h>
 #include "parser.h"
 #include "command.h"
 
@@ -137,6 +138,55 @@ int main(int argc, char *argv[], char *envp[])
                 print_jobs();
             }
 
+            else if (strcmp(arg->data[0], "kill") == 0)
+            {
+                int sig = SIGTERM;
+                if(arg->data[1][0] == '-')
+                {
+                    int sig_nb = strtol(arg->data[1] + 1, NULL, 10);
+                    if(sig_nb < 65 && sig_nb > 0){
+                        sig = atoi(arg->data[1] + 1);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "-bash: kill: %s: invalid signal specification", arg->data[1] + 1);
+                    }
+                }
+                else if(arg->data[1][0] == '%')
+                {
+                    if(kill_job(strtol(arg->data[1] + 1, NULL, 10), sig) == -1)
+                    {
+                        fprintf(stderr, "-bash: kill: %s: no such job\n", arg->data[1]);
+                    }
+                }
+                else
+                {
+                    if(strtol(arg->data[1], NULL, 10) == 0 && strcmp(arg->data[1], "0") != 0)
+                    {
+                        fprintf(stderr, "-bash: kill: %s: arguments must be process or job IDs\n", arg->data[1]);
+                    }
+                    if(kill(strtol(arg->data[1], NULL, 10), sig) == -1)
+                    {
+                        fprintf(stderr, "-bash: kill: (%s) - No such process\n", arg->data[1]);
+                    }
+
+                }
+                for(int i = 2 ; i < arg->len ; ++i)
+                {
+                    if(arg->data[1][0] == '%')
+                    {
+                        if(kill_job(strtol(arg->data[i], NULL, 10), sig) == -1)
+                        {
+                            fprintf(stderr, "-bash: kill: %s: no such job\n", arg->data[i]);
+                        }
+                    }
+                    else if(kill(strtol(arg->data[i], NULL, 10), sig) == -1)
+                    {
+                        fprintf(stderr, "-bash: kill: (%s) - No such process\n", arg->data[i]);
+                    }
+                }
+            }
+
             else if (strcmp(arg->data[0], "?") == 0)
             {
                 fprintf(stdout, "%d\n", last_command_return);
@@ -179,6 +229,8 @@ int main(int argc, char *argv[], char *envp[])
                     {
                         case 0:
                         {
+                            activate_sig();
+
                             if (arg->data[0][0] == '.' || arg->data[0][0] == '/')
                             {
                                 int r = execv(arg->data[0], arg->data);
