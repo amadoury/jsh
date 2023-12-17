@@ -8,27 +8,31 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <ctype.h>
 #include "parser.h"
 #include "command.h"
 
 #define SIZE_STR_INPUT 100
 
-int main(int argc, char *argv[], char *envp[]){
+int main(int argc, char *argv[], char *envp[])
+{
 
     signaux();
 
     int fd_stdout_jsh = open("stdout_jsh", O_CREAT | O_TRUNC |O_RDWR, 0664);
 
-    struct argv_t * arg;
+     struct argv_t * arg;
 
     int last_command_return = 0;
     rl_outstream = stderr;
 
-    while(1){
+    while (1)
+    {
 
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
-        if(p == NULL){
+        if (p == NULL)
+        {
             fprintf(stdout, "error malloc");
             exit(1);
         }
@@ -45,22 +49,22 @@ int main(int argc, char *argv[], char *envp[]){
             strcat(p, "...");
             strcat(p, pwd+strlen(pwd)-22);
         }
-        else{
+        else
+        {
             strcat(p, pwd);
         }
 
         strcat(p, "\001\033[00m\002$ ");
 
-
-        char * line = readline(p);
+        char *line = readline(p);
         free(p);
         free(pwd);
-        if (line == NULL){
+        if (line == NULL)
+        {
             exit_jsh(last_command_return);
         }
-    
 
-        char * l = malloc(sizeof(char) * (strlen(line) + 1)); 
+        char *l = malloc(sizeof(char) * (strlen(line) + 1));
         strcpy(l, line);
         add_history(l);
 
@@ -71,21 +75,24 @@ int main(int argc, char *argv[], char *envp[]){
             if (strcmp(arg->data[0], "cd") == 0){
                 if (arg->len == 1){
                     last_command_return = cd(NULL);
-                    if (last_command_return == 1){
-                        fprintf(rl_outstream, "No such file or directory\n");
+                    if (last_command_return == 1)
+                    {
+                        fprintf(stderr, "No such file or directory\n");
                     }
                 }
-                else{
+                else
+                {
                     last_command_return = cd(arg->data[1]);
-                    if (last_command_return == 1){
-                        fprintf(rl_outstream, "bash: cd: %s: No such file or directory\n", arg->data[0]);
+                    if (last_command_return == 1)
+                    {
+                        fprintf(stderr, "bash: cd: %s: No such file or directory\n", arg->data[0]);
                     }
                 }
             }
 
             else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec){
                 pwd = pwd_jsh();
-                fprintf(stdout, "%s\n",pwd);
+                fprintf(stdout, "%s\n", pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
                 free(pwd);
             }
@@ -106,7 +113,8 @@ int main(int argc, char *argv[], char *envp[]){
                         free(l);
                         exit_jsh(last_command_return);
                     }
-                    else if (arg->len == 2){
+                    else if (arg->len == 2)
+                    {
                         int val_exit = atoi(arg->data[1]);
                         free(arg->data);
                         free(arg);
@@ -114,8 +122,9 @@ int main(int argc, char *argv[], char *envp[]){
                         free(l);
                         exit_jsh(val_exit);
                     }
-                    else{
-                        fprintf(stdout, "exit has at most two arguments\n");
+                    else
+                    {
+                        fprintf(stderr, "exit has at most two arguments\n");
                     }
                 }
                 else{
@@ -124,17 +133,69 @@ int main(int argc, char *argv[], char *envp[]){
                 }
             }
 
-            else if (strcmp(arg->data[0], "jobs") == 0){
+            else if (strcmp(arg->data[0], "jobs") == 0)
+            {
                 remove_jobs();
                 print_jobs();
             }
 
-            else if (strcmp(arg->data[0], "?") == 0){
-                fprintf(stdout, "%d\n",last_command_return);
+            else if (strcmp(arg->data[0], "kill") == 0)
+            {
+                int sig = SIGTERM;
+                if(arg->data[1][0] == '-')
+                {
+                    int sig_nb = strtol(arg->data[1] + 1, NULL, 10);
+                    if(sig_nb < 65 && sig_nb > 0){
+                        sig = atoi(arg->data[1] + 1);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "-bash: kill: %s: invalid signal specification", arg->data[1] + 1);
+                    }
+                }
+                else if(arg->data[1][0] == '%')
+                {
+                    if(kill_job(strtol(arg->data[1] + 1, NULL, 10), sig) == -1)
+                    {
+                        fprintf(stderr, "-bash: kill: %s: no such job\n", arg->data[1]);
+                    }
+                }
+                else
+                {
+                    if(strtol(arg->data[1], NULL, 10) == 0 && strcmp(arg->data[1], "0") != 0)
+                    {
+                        fprintf(stderr, "-bash: kill: %s: arguments must be process or job IDs\n", arg->data[1]);
+                    }
+                    if(kill(strtol(arg->data[1], NULL, 10), sig) == -1)
+                    {
+                        fprintf(stderr, "-bash: kill: (%s) - No such process\n", arg->data[1]);
+                    }
+
+                }
+                for(int i = 2 ; i < arg->len ; ++i)
+                {
+                    if(arg->data[1][0] == '%')
+                    {
+                        if(kill_job(strtol(arg->data[i], NULL, 10), sig) == -1)
+                        {
+                            fprintf(stderr, "-bash: kill: %s: no such job\n", arg->data[i]);
+                        }
+                    }
+                    else if(kill(strtol(arg->data[i], NULL, 10), sig) == -1)
+                    {
+                        fprintf(stderr, "-bash: kill: (%s) - No such process\n", arg->data[i]);
+                    }
+                }
+            }
+
+            else if (strcmp(arg->data[0], "?") == 0)
+            {
+                fprintf(stdout, "%d\n", last_command_return);
                 last_command_return = 0;
             }
 
             else{
+  
 
                 if (index_redirec){
                     struct argv_t * arg_cmd = data_cmd(arg,index_redirec);
@@ -171,24 +232,36 @@ int main(int argc, char *argv[], char *envp[]){
                         }
                     }
                 }
-                else{
+
+                else
+                {
                     pid_t pids = fork();
                     int status;
-                        
+ 
                     switch (pids)
+                    {
+                        case 0:
                         {
-                        case 0 :
-                        {
-                            if (arg->data[0][0] == '.' || arg->data[0][0] == '/'){
+                            activate_sig();
+
+                            if (arg->data[0][0] == '.' || arg->data[0][0] == '/')
+                            {
                                 int r = execv(arg->data[0], arg->data);
-                                if (r == -1){
-                                    fprintf(stderr,"Unknown command\n");
-                                } 
+                                if (r == -1)
+                                {
+                                    if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                    else
+                                        remove_jobs();
+                                }
                             }
-                            else{
+                            else
+                            {
                                 int r = execvp(arg->data[0], arg->data);
-                                if (r == -1){
-                                    fprintf(stderr,"Unknown command\n");
+                                if (r == -1)
+                                {
+                                    if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                    else
+                                        remove_jobs();
                                 }
                             }
                             free(arg->data);
@@ -196,28 +269,31 @@ int main(int argc, char *argv[], char *envp[]){
                             free(line);
                             free(l);
                             exit(1);
-                        }        
+                        }
                         default:
-                        
-                            if(arg->esp == 0)
-                                waitpid(pids,&status,0);
+                        {
+                            if (arg->esp == 0)
+                                waitpid(pids, &status, 0);
                             else
                                 add_job(pids, l);
-                            if (WIFEXITED(status)){
+                            if (WIFEXITED(status))
+                            {
                                 last_command_return = WEXITSTATUS(status);
                             }
-                            else {
+                            else
+                            {
                                 last_command_return = 1;
                             }
                             break;
                         }
-                    }     
+                    }
                 }
             }
         free(arg->data);
         free(arg);
         free(line);
         free(l);
+    }
     }
     return 0;
 }

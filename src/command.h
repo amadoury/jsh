@@ -30,4 +30,8 @@ int get_nb_jobs();
 
 void signaux();
 
+void activate_sig();
+
+int kill_job(int n, int sig);
+
 #endif
