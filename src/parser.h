@@ -18,11 +18,9 @@ int nb_words(char *);
 struct argv_t *split(char *);
 
 int is_redirection(struct argv_t *);
-
+int which_redirection_str_is(char *);
 int which_redirection(struct argv_t *);
-
-struct argv_t *data_cmd(struct argv_t *, int);
-
-int contient_perluette(struct argv_t *);
+int nb_direction(struct argv_t *);
+struct argv_t * data_cmd(struct argv_t *,int);
 
 #endif

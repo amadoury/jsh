@@ -19,7 +19,9 @@ int main(int argc, char *argv[], char *envp[])
 
     signaux();
 
-    struct argv_t *arg;
+    int fd_stdout_jsh = open("stdout_jsh", O_CREAT | O_TRUNC |O_RDWR, 0664);
+
+     struct argv_t * arg;
 
     int last_command_return = 0;
     rl_outstream = stderr;
@@ -43,10 +45,9 @@ int main(int argc, char *argv[], char *envp[])
         free(nb_jobs_tab);
         strcat(p, "]\001\033[36m\002");
 
-        if (strlen(pwd) >= 26)
-        {
+        if(strlen(pwd) > 26){
             strcat(p, "...");
-            strcat(p, pwd + strlen(pwd) - 23);
+            strcat(p, pwd+strlen(pwd)-22);
         }
         else
         {
@@ -68,13 +69,11 @@ int main(int argc, char *argv[], char *envp[])
         add_history(l);
 
         arg = split(line);
-
-        if (arg->len != 0)
-        {
-            if (strcmp(arg->data[0], "cd") == 0)
-            {
-                if (arg->len == 1)
-                {
+    
+        if (arg->len != 0){
+            int index_redirec = is_redirection(arg);
+            if (strcmp(arg->data[0], "cd") == 0){
+                if (arg->len == 1){
                     last_command_return = cd(NULL);
                     if (last_command_return == 1)
                     {
@@ -91,20 +90,23 @@ int main(int argc, char *argv[], char *envp[])
                 }
             }
 
-            else if (strcmp(arg->data[0], "pwd") == 0)
-            {
+            else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec){
                 pwd = pwd_jsh();
                 fprintf(stdout, "%s\n", pwd);
                 last_command_return = (pwd == NULL) ? 1 : 0;
                 free(pwd);
             }
 
-            else if (strcmp(arg->data[0], "exit") == 0)
-            {
-                if (get_nb_jobs() == 0)
-                {
-                    if (arg->len == 1)
-                    {
+            else if (strcmp(arg->data[0], "exit") == 0){
+                if (!get_nb_jobs()){
+                    if (index_redirec){
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                        exit_jsh(0);
+                    }
+                    if (arg->len == 1){
                         free(arg->data);
                         free(arg);
                         free(line);
@@ -125,8 +127,7 @@ int main(int argc, char *argv[], char *envp[])
                         fprintf(stderr, "exit has at most two arguments\n");
                     }
                 }
-                else
-                {
+                else{
                     fprintf(stderr, "There are still jobs running\n");
                     last_command_return = 1;
                 }
@@ -193,30 +194,42 @@ int main(int argc, char *argv[], char *envp[])
                 last_command_return = 0;
             }
 
-            else
-            {
-                int redirec = is_redirection(arg);
-                if (redirec)
-                {
-                    int nb_redir = which_redirection(arg);
-                    if (nb_redir == 1)
-                    {
-                        redirection(arg, &last_command_return, redirec, 0, O_RDONLY, 1);
-                    }
-                    if (nb_redir == 2 || nb_redir == 5)
-                    {
-                        int option = O_WRONLY | O_EXCL | O_CREAT;
-                        redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
-                    }
-                    if (nb_redir == 3 || nb_redir == 6)
-                    {
-                        int option = O_WRONLY | O_CREAT | O_TRUNC;
-                        redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
-                    }
-                    if (nb_redir == 4 || nb_redir == 7)
-                    {
-                        int option = O_WRONLY | O_CREAT | O_APPEND;
-                        redirection(arg, &last_command_return, redirec, 1, option, nb_redir);
+            else{
+  
+
+                if (index_redirec){
+                    struct argv_t * arg_cmd = data_cmd(arg,index_redirec);
+                    int number_of_redirection = nb_direction(arg);
+                    int nb_redir;
+                    int last_redirec = 0;
+                    for (int i = 1; i <= number_of_redirection; ++i){
+                        if (i == 1){
+                            nb_redir = which_redirection(arg);
+                            if (nb_redir == 1){
+                                redirection(arg_cmd, &last_command_return,arg->data[index_redirec + 1],0,O_RDONLY,1, fd_stdout_jsh, number_of_redirection);
+                            }
+                            if (nb_redir == 2 || nb_redir == 5){
+                                int option = O_WRONLY | O_EXCL | O_CREAT;
+                                redirection(arg_cmd, &last_command_return, arg->data[index_redirec + 1],1,option,nb_redir, fd_stdout_jsh, number_of_redirection);
+                            }
+                            if (nb_redir == 3 || nb_redir == 6){
+                                int option = O_WRONLY | O_CREAT | O_TRUNC;
+                                redirection(arg_cmd, &last_command_return, arg->data[index_redirec + 1],1,option,nb_redir, fd_stdout_jsh, number_of_redirection);
+                            }
+                            if (nb_redir == 4 || nb_redir == 7){
+                                int option = O_WRONLY | O_CREAT | O_APPEND;
+                                redirection(arg_cmd, &last_command_return, arg->data[index_redirec + 1],1,option,nb_redir, fd_stdout_jsh, number_of_redirection);   
+                            }
+                        }
+                        if (i > 1){
+                            int last_redirec = which_redirection_str_is(arg->data[index_redirec]);
+                            int index_new_redirec = index_redirec + 2;
+                            int new_redirec = which_redirection_str_is(arg->data[index_new_redirec]);
+                            //do write or read
+                            do_read_or_write_to_file(last_redirec, new_redirec, arg->data[index_redirec + 1], arg->data[index_new_redirec + 1], fd_stdout_jsh);
+                            //redirec = new_redirec;
+                            index_redirec = index_new_redirec;
+                        }
                     }
                 }
 
@@ -224,7 +237,7 @@ int main(int argc, char *argv[], char *envp[])
                 {
                     pid_t pids = fork();
                     int status;
-
+ 
                     switch (pids)
                     {
                         case 0:
@@ -276,11 +289,11 @@ int main(int argc, char *argv[], char *envp[])
                     }
                 }
             }
-        }
         free(arg->data);
         free(arg);
         free(line);
         free(l);
+    }
     }
     return 0;
 }
