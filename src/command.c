@@ -286,6 +286,7 @@ void signaux()
 
 void sig_job(int sig)
 {
+    fprintf(stderr, "sig %d arrived\n", sig);
     for (int i = 0; i < jobs_nb; ++i)
     {
         if (jobs[i] != NULL && jobs[i]->id == getpid())

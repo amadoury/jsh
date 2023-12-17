@@ -138,7 +138,7 @@ int main(int argc, char *argv[], char *envp[])
                 print_jobs();
             }
 
-            else if (strcmp(arg->data[0], "kill") == 0)
+            else if (strcmp(arg->data[0], "kill") == 0 && strcmp(arg->data[1], "-l") != 0)
             {
                 int sig = SIGTERM;
                 if(arg->data[1][0] == '-')
@@ -173,9 +173,9 @@ int main(int argc, char *argv[], char *envp[])
                 }
                 for(int i = 2 ; i < arg->len ; ++i)
                 {
-                    if(arg->data[1][0] == '%')
+                    if(arg->data[i][0] == '%')
                     {
-                        if(kill_job(strtol(arg->data[i], NULL, 10), sig) == -1)
+                        if(kill_job(strtol(arg->data[i] + 1, NULL, 10), sig) == -1)
                         {
                             fprintf(stderr, "-bash: kill: %s: no such job\n", arg->data[i]);
                         }
