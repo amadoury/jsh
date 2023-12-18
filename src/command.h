@@ -12,7 +12,7 @@ int cd(const char *);
  
 char * pwd_jsh();
  
-void redirection(struct argv_t *, int *, char *, int, int,int,int,int);
+int redirection(int *, char *, int, int);
 
 void do_read_or_write_to_file(int, int, char *, char *, int);
 

@@ -2,6 +2,7 @@
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         "ctype.h": "c",
-        "parser.h": "c"
+        "parser.h": "c",
+        "fcntl.h": "c"
     }
 }
