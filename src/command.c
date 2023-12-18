@@ -132,7 +132,8 @@ void redirection(struct argv_t * arg_cmd, int * last_return, char * file, int mo
                     dup2(fd_file,STDIN_FILENO);
                     close(fd_file);
                     if (nbr >= 2){
-                        dup2(stdout_jsh, STDOUT_FILENO);
+                        dup2(stdout_jsh, STDERR_FILENO);
+                        close(STDOUT_FILENO);
                     }
                 }
                 if (nb_redir == 2 || nb_redir == 3 || nb_redir == 4){
@@ -182,13 +183,24 @@ void do_read_or_write_to_file(int last_redirec, int new_redirec, char * file_las
         else{
             char buf[BLOCK_SIZE];
             int nb;
+            fcntl(stdout_jsh, F_SETFL, O_TRUNC);
             while((nb = read(fd_file_new_redirec, buf, BLOCK_SIZE)) > 0){
-                write(1, buf, nb);
+                write(stdout_jsh, buf, nb);
             }
         }
     }
-    if (last_redirec == 1 && new_redirec == 2){
-        int fd_file_new_redirec = open(file_new_redirec, O_WRONLY | O_CREAT | O_EXCL | O_APPEND, 0664);
+    if (last_redirec == 1 && (new_redirec == 2 || new_redirec == 3 || new_redirec == 4)){
+        int option ;
+        if (new_redirec == 2){
+            option = O_WRONLY | O_CREAT |O_EXCL;
+        }
+        if (new_redirec == 3){
+            option = O_WRONLY | O_CREAT | O_TRUNC;
+        }
+        if (new_redirec == 4){
+            option = O_WRONLY | O_CREAT | O_APPEND;
+        }
+        int fd_file_new_redirec = open(file_new_redirec, option , 0664);
         if (fd_file_new_redirec == -1){
             if (errno == EEXIST){
                 fprintf(stderr, "File already exist\n");
@@ -201,6 +213,38 @@ void do_read_or_write_to_file(int last_redirec, int new_redirec, char * file_las
                 write(fd_file_new_redirec, buf, nb);
             }
         }
+    }
+    if (last_redirec == 2){
+        int option;
+        if (new_redirec == 2 || new_redirec == 5){
+            option = O_WRONLY | O_EXCL | O_CREAT;
+        }
+        if (new_redirec == 3 || new_redirec == 6){
+            option = O_WRONLY | O_TRUNC | O_CREAT;
+        }
+        if (new_redirec == 4 || new_redirec == 7){
+            option = O_WRONLY | O_CREAT | O_APPEND;
+        }
+   
+        int fd_file_new_redirec;
+
+        if (fd_file_new_redirec == -1){
+            if (errno == EEXIST){
+                fprintf(stderr, "File already exist\n");
+            }
+        }
+        else if (new_redirec == 2 || new_redirec == 3 || new_redirec == 4){
+            fd_file_new_redirec = open(file_new_redirec, option, 0664);
+        }
+        else if(new_redirec == 5 || new_redirec == 6 || new_redirec == 7){
+            dup2(STDERR_FILENO, fd_file_new_redirec);
+        }
+        char buf[BLOCK_SIZE];
+        int nb;
+        int fd_last = open(file_last_redirec, O_RDONLY);
+        while((nb = read(fd_last, buf, BLOCK_SIZE)) > 0){
+            write(fd_file_new_redirec, buf, nb);
+        } 
     }
 }
 

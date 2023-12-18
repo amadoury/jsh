@@ -19,7 +19,7 @@ int main(int argc, char *argv[], char *envp[])
 
     signaux();
 
-    int fd_stdout_jsh = open("stdout_jsh", O_CREAT | O_TRUNC |O_RDWR, 0664);
+    int fd_stdout_jsh = open("stdout_jsh", O_CREAT | O_RDWR, 0664);
 
      struct argv_t * arg;
 
@@ -222,7 +222,8 @@ int main(int argc, char *argv[], char *envp[])
                             }
                         }
                         if (i > 1){
-                            int last_redirec = which_redirection_str_is(arg->data[index_redirec]);
+
+                            // int last_redirec = which_redirection_str_is(arg->data[index_redirec]);
                             int index_new_redirec = index_redirec + 2;
                             int new_redirec = which_redirection_str_is(arg->data[index_new_redirec]);
                             //do write or read
