@@ -145,7 +145,7 @@ void add_job(int pid, char *name){
 
 void remove_jobs(int need_to_print)
 {
-    for (int i = 0; i < jobs_nb; ++i)
+    for (int i = 0; i < jobs_nb_last; ++i)
     {
         int status = 0;
         if (jobs[i] != NULL)
@@ -154,8 +154,10 @@ void remove_jobs(int need_to_print)
             {
                 if (WIFEXITED(status) || WIFSIGNALED(status))
                 {
-                    if (WIFEXITED(status))
+                    if(WIFEXITED(status))
                         jobs[i]->state = "Done   ";
+                    if(WIFSTOPPED(status))
+                        jobs[i]->state = "Stopped";
                     else
                         jobs[i]->state = "Killed ";
                     if(need_to_print)
@@ -163,19 +165,11 @@ void remove_jobs(int need_to_print)
                         fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
                     }
                 }
-                if (WIFSTOPPED(status))
-                {
-                    jobs[i]->state = "Stopped";
-                    if(need_to_print)
-                        fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
-                }
             }
         }
     }
 
     int end = 1;
-
-    fprintf(stdout, "nb_jobs : %d\n", jobs_nb);
 
     if(need_to_print)
     {
@@ -268,19 +262,28 @@ int kill_job(int n, int sig)
 
 void signaux()
 {
-    struct sigaction actINTbash, actTERMbash, actTSTPbash;
+    struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash;
 
     memset(&actINTbash, 0, sizeof(actINTbash));
     memset(&actTERMbash, 0, sizeof(actTERMbash));
     memset(&actTSTPbash, 0, sizeof(actTSTPbash));
+    memset(&actTTINbash, 0, sizeof(actTTINbash));
+    memset(&actQUITbash, 0, sizeof(actQUITbash));
+    memset(&actTTOUbash, 0, sizeof(actTTOUbash));
 
     actINTbash.sa_handler = SIG_IGN;
     actTERMbash.sa_handler = SIG_IGN;
     actTSTPbash.sa_handler = SIG_IGN;
+    actTTINbash.sa_handler = SIG_IGN;
+    actQUITbash.sa_handler = SIG_IGN;
+    actTTOUbash.sa_handler = SIG_IGN;
 
     sigaction(SIGINT, &actINTbash, NULL);
     sigaction(SIGTERM, &actTERMbash, NULL);
     sigaction(SIGTSTP, &actTSTPbash, NULL);
+    sigaction(SIGTTIN, &actTTINbash, NULL);
+    sigaction(SIGQUIT, &actQUITbash, NULL);
+    sigaction(SIGTTOU, &actTTOUbash, NULL);
 }
 
 void sig_job(int sig)
@@ -298,21 +301,30 @@ void sig_job(int sig)
 
 void activate_sig()
 {
-    struct sigaction actINTbash, actTERMbash, actTSTPbash, actKILLbash;
+    struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash, actKILLbash;
 
     memset(&actINTbash, 0, sizeof(actINTbash));
     memset(&actTERMbash, 0, sizeof(actTERMbash));
     memset(&actTSTPbash, 0, sizeof(actTSTPbash));
+    memset(&actTTINbash, 0, sizeof(actTTINbash));
+    memset(&actQUITbash, 0, sizeof(actQUITbash));
+    memset(&actTTOUbash, 0, sizeof(actTTOUbash));
     memset(&actKILLbash, 0, sizeof(actKILLbash));
 
     actINTbash.sa_handler = SIG_DFL;
     actTERMbash.sa_handler = SIG_DFL;
-    actTSTPbash.sa_handler = sig_job;
-    actKILLbash.sa_handler = sig_job;
+    actTSTPbash.sa_handler = SIG_DFL;
+    actTTINbash.sa_handler = SIG_DFL;
+    actQUITbash.sa_handler = SIG_DFL;
+    actTTOUbash.sa_handler = SIG_DFL;
+    actKILLbash.sa_handler = SIG_DFL;
 
     sigaction(SIGINT, &actINTbash, NULL);
     sigaction(SIGTERM, &actTERMbash, NULL);
     sigaction(SIGTSTP, &actTSTPbash, NULL);
+    sigaction(SIGTTIN, &actTTINbash, NULL);
+    sigaction(SIGQUIT, &actQUITbash, NULL);
+    sigaction(SIGTTOU, &actTTOUbash, NULL);
     sigaction(SIGKILL, &actKILLbash, NULL);
 
 }
