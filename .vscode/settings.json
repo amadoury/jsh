@@ -3,6 +3,7 @@
     "files.associations": {
         "ctype.h": "c",
         "parser.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "types.h": "c"
     }
 }

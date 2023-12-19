@@ -136,7 +136,7 @@ void add_job(int pid, char *name){
     jobs[jobs_nb]->state = "Running";
     jobs[jobs_nb]->name = malloc(sizeof(char) * (strlen(name) + 1));
     strcpy(jobs[jobs_nb]->name, name);
-    *(jobs[jobs_nb]->name + strlen(name) - 1) = '\0';
+    *(jobs[jobs_nb]->name + strlen(name) - 2) = '\0';
     fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb + 1, jobs[jobs_nb]->id, jobs[jobs_nb]->state, jobs[jobs_nb]->name);
     ++jobs_nb;
 
@@ -154,7 +154,10 @@ void remove_jobs(int need_to_print)
             {
                 if (WIFEXITED(status) || WIFSIGNALED(status))
                 {
-                    jobs[i]->state = "Done   ";
+                    if (WIFEXITED(status))
+                        jobs[i]->state = "Done   ";
+                    else
+                        jobs[i]->state = "Killed ";
                     if(need_to_print)
                         fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
                     free(jobs[i]->name);
