@@ -164,7 +164,7 @@ void remove_jobs(int need_to_print)
                     if (i == jobs_nb - 1)
                     {
                         int j = i;
-                        while (j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0)))
+                        while (j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0) || (strcmp(jobs[i]->state, "Killed ") == 0)))
                         {
                             --jobs_nb;
                             --j;
@@ -210,7 +210,7 @@ void print_jobs()
         if (jobs[i] != NULL)
         {
             fprintf(stdout, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
-            if (strcmp(jobs[i]->state, "Done   ") == 0)
+            if (strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed "))
             {
                 free(jobs[i]->name);
                 free(jobs[i]);
@@ -218,7 +218,7 @@ void print_jobs()
                 if (i == jobs_nb - 1)
                 {
                     int j = i;
-                    while (j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0)))
+                    while (j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0) || (strcmp(jobs[i]->state, "Killed ") == 0)))
                     {
                         --jobs_nb;
                         --j;
