@@ -152,7 +152,10 @@ void remove_jobs(int need_to_print)
             {
                 if (WIFEXITED(status) || WIFSIGNALED(status))
                 {
-                    jobs[i]->state = "Done   ";
+                    if (WIFEXITED(status))
+                        jobs[i]->state = "Done   ";
+                    else
+                        jobs[i]->state = "Killed ";
                     if(need_to_print)
                         fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
                     free(jobs[i]->name);
