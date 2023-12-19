@@ -205,7 +205,7 @@ int main(int argc, char *argv[], char *envp[])
                     {
                         activate_sig();
 
-                        int is_after_redir = 0;
+                         int is_after_redir = 0;
                         int nb_redir = -1;
                         int first_redir = -1;
                         int fd_file = -1;
@@ -213,12 +213,56 @@ int main(int argc, char *argv[], char *envp[])
 
                         for(int i = 1 ; i < arg->len ; ++i)
                         {
-                            if(is_str_redirection(arg->data[i]))
+                            activate_sig();
+
+                            int is_after_redir = 0;
+                            int nb_redir = -1;
+                            int first_redir = -1;
+                            int fd_file = -2;
+                            int redir_error = 0;
+
+                             for(int i = 1 ; i < arg->len ; ++i)
                             {
-                                is_after_redir = 1;
-                                nb_redir = which_redirection_str_is(arg->data[i]);
-                                if(first_redir == -1)
-                                    first_redir = i;
+                                if(is_str_redirection(arg->data[i]))
+                                {
+                                    is_after_redir = 1;
+                                    nb_redir = which_redirection_str_is(arg->data[i]);
+                                    if(first_redir == -1)
+                                        first_redir = i;
+                                }
+                                else if(is_after_redir == 1)
+                                {
+                                    if (nb_redir == 1){
+                                        fd_file = redirection(&last_command_return, arg->data[i],0,O_RDONLY);
+                                        dup2(fd_file, 0);
+                                    }
+                                    else if (nb_redir == 2 || nb_redir == 5){
+                                        int option = O_WRONLY | O_EXCL | O_CREAT;
+                                        fd_file = redirection(&last_command_return, arg->data[i],1,option);
+                                        if(nb_redir == 2)
+                                            dup2(fd_file, 1);
+                                        else
+                                            dup2(fd_file, 2);
+                                    }
+                                    else if (nb_redir == 3 || nb_redir == 6){
+                                        int option = O_WRONLY | O_CREAT | O_TRUNC;
+                                        fd_file = redirection(&last_command_return, arg->data[i],1,option);
+                                        if(nb_redir == 3)
+                                            dup2(fd_file, 1);
+                                        else
+                                            dup2(fd_file, 2);
+                                    }
+                                    else if (nb_redir == 4 || nb_redir == 7){
+                                        int option = O_WRONLY | O_CREAT | O_APPEND;
+                                        fd_file = redirection(&last_command_return, arg->data[i],1,option);
+                                        if(nb_redir == 4)
+                                            dup2(fd_file, 1);
+                                        else
+                                            dup2(fd_file, 2);
+                                    }
+                                    if(fd_file == -1)
+                                        redir_error = 1;
+                                }
                             }
                             else if(is_after_redir == 1)
                             {
