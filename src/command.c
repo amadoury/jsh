@@ -145,7 +145,7 @@ void add_job(int pid, char *name){
 
 void remove_jobs(int need_to_print)
 {
-    for (int i = 0; i < jobs_nb; ++i)
+    for (int i = 0; i < jobs_nb_last; ++i)
     {
         int status = 0;
         if (jobs[i] != NULL)
@@ -175,8 +175,6 @@ void remove_jobs(int need_to_print)
 
     int end = 1;
 
-    fprintf(stdout, "nb_jobs : %d\n", jobs_nb);
-
     if(need_to_print)
     {
         for(int i = jobs_nb_last - 1 ; i >= 0 ; --i)
@@ -196,27 +194,6 @@ void remove_jobs(int need_to_print)
         }
     }
 }
-
-// void add_job_to_remove(pid_t pid)
-// {
-//     job_to_remove = pid;
-// }
-
-// void remove_invalid_command()
-// {
-//     printf("removing %d\n", job_to_remove);
-//     for (int i = 0; i < jobs_nb_last; ++i)
-//     {
-//         if (jobs[i] != NULL && jobs[i]->id == job_to_remove)
-//         {
-//             free(jobs[i]->name);
-//             free(jobs[i]);
-//             jobs[i] = NULL;
-//             if (i == jobs_nb_last - 1)
-//                 --jobs_nb_last;
-//         }
-//     }
-// }
 
 void print_jobs()
 {

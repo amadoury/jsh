@@ -233,7 +233,7 @@ int main(int argc, char *argv[], char *envp[])
                                         dup2(fd_file, 1);
                                     else
                                         dup2(fd_file, 2);
-                                        remove_jobs(0);
+                                        //remove_jobs(0);
                                 }
                                 else if (nb_redir == 3 || nb_redir == 6){
                                     int option = O_WRONLY | O_CREAT | O_TRUNC;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[], char *envp[])
                                         dup2(fd_file, 1);
                                     else
                                         dup2(fd_file, 2);
-                                        remove_jobs(0);
+                                        //remove_jobs(0);
                                 }
                                 else if (nb_redir == 4 || nb_redir == 7){
                                     int option = O_WRONLY | O_CREAT | O_APPEND;
@@ -295,8 +295,6 @@ int main(int argc, char *argv[], char *envp[])
                         if (WIFEXITED(status))
                         {
                             last_command_return = WEXITSTATUS(status);
-                            // if (get_nb_jobs() > 0)
-                            //     set_nb_jobs(get_nb_jobs() - 1);
                         }
                         else
                         {
