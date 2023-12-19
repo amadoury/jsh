@@ -196,152 +196,114 @@ int main(int argc, char *argv[], char *envp[])
 
             else
             {
+                pid_t pids = fork();
+                int status;
 
-                // if (index_redirec){
-                //     struct argv_t * arg_cmd = data_cmd(arg,index_redirec);
-                //     int number_of_redirection = nb_direction(arg);
-                //     int nb_redir;
-                //     int last_redirec = 0;
-                //     for (int i = 1; i <= number_of_redirection; ++i){
-                //         if (i == 1){
-                //             nb_redir = which_redirection(arg);
-                //             if (nb_redir == 1){
-                //                 redirection(arg_cmd, &last_command_return,arg->data[index_redirec + 1],0,O_RDONLY,1, fd_stdout_jsh, number_of_redirection);
-                //             }
-                //             if (nb_redir == 2 || nb_redir == 5){
-                //                 int option = O_WRONLY | O_EXCL | O_CREAT;
-                //                 redirection(arg_cmd, &last_command_return, arg->data[index_redirec + 1],1,option,nb_redir, fd_stdout_jsh, number_of_redirection);
-                //             }
-                //             if (nb_redir == 3 || nb_redir == 6){
-                //                 int option = O_WRONLY | O_CREAT | O_TRUNC;
-                //                 redirection(arg_cmd, &last_command_return, arg->data[index_redirec + 1],1,option,nb_redir, fd_stdout_jsh, number_of_redirection);
-                //             }
-                //             if (nb_redir == 4 || nb_redir == 7){
-                //                 int option = O_WRONLY | O_CREAT | O_APPEND;
-                //                 redirection(arg_cmd, &last_command_return, arg->data[index_redirec + 1],1,option,nb_redir, fd_stdout_jsh, number_of_redirection);   
-                //             }
-                //         }
-                //         if (i > 1){
-                //             int last_redirec = which_redirection_str_is(arg->data[index_redirec]);
-                //             int index_new_redirec = index_redirec + 2;
-                //             int new_redirec = which_redirection_str_is(arg->data[index_new_redirec]);
-                //             //do write or read
-                //             do_read_or_write_to_file(last_redirec, new_redirec, arg->data[index_redirec + 1], arg->data[index_new_redirec + 1], fd_stdout_jsh);
-                //             //redirec = new_redirec;
-                //             index_redirec = index_new_redirec;
-                //         }
-                //     }
-                // }
-
-                // else
-                // {
-                    pid_t pids = fork();
-                    int status;
- 
-                    switch (pids)
+                switch (pids)
+                {
+                    case 0:
                     {
-                        case 0:
+                        activate_sig();
+
+                        int is_after_redir = 0;
+                        int nb_redir = -1;
+                        int first_redir = -1;
+                        int fd_file = -1;
+                        int redir_error = 0;
+
+                        for(int i = 1 ; i < arg->len ; ++i)
                         {
-                            activate_sig();
-
-                            int is_after_redir = 0;
-                            int nb_redir = -1;
-                            int first_redir = -1;
-                            int fd_file = -1;
-                            int redir_error = 0;
-
-                            for(int i = 1 ; i < arg->len ; ++i)
+                            if(is_str_redirection(arg->data[i]))
                             {
-                                if(is_str_redirection(arg->data[i]))
-                                {
-                                    is_after_redir = 1;
-                                    nb_redir = which_redirection_str_is(arg->data[i]);
-                                    if(first_redir == -1)
-                                        first_redir = i;
-                                }
-                                else if(is_after_redir == 1)
-                                {
-                                    int fd_file;
-                                    if (nb_redir == 1){
-                                        fd_file = redirection(&last_command_return, arg->data[i],0,O_RDONLY);
-                                        dup2(fd_file, 0);
-                                    }
-                                    else if (nb_redir == 2 || nb_redir == 5){
-                                        int option = O_WRONLY | O_EXCL | O_CREAT;
-                                        fd_file = redirection(&last_command_return, arg->data[i],1,option);
-                                        if(nb_redir == 2)
-                                            dup2(fd_file, 1);
-                                        else
-                                            dup2(fd_file, 2);
-                                    }
-                                    else if (nb_redir == 3 || nb_redir == 6){
-                                        int option = O_WRONLY | O_CREAT | O_TRUNC;
-                                        fd_file = redirection(&last_command_return, arg->data[i],1,option);
-                                        if(nb_redir == 3)
-                                            dup2(fd_file, 1);
-                                        else
-                                            dup2(fd_file, 2);
-                                    }
-                                    else if (nb_redir == 4 || nb_redir == 7){
-                                        int option = O_WRONLY | O_CREAT | O_APPEND;
-                                        fd_file = redirection(&last_command_return, arg->data[i],1,option);
-                                        if(nb_redir == 4)
-                                            dup2(fd_file, 1);
-                                        else
-                                            dup2(fd_file, 2);
-                                    }
-                                    if(fd_file == -1)
-                                        redir_error = 1;
-                                }
+                                is_after_redir = 1;
+                                nb_redir = which_redirection_str_is(arg->data[i]);
+                                if(first_redir == -1)
+                                    first_redir = i;
                             }
-
-                            if(first_redir != -1)
-                                arg->data[first_redir] = NULL;
-
-                            if (redir_error == 0 && arg->data[0][0] == '.' || arg->data[0][0] == '/')
+                            else if(is_after_redir == 1)
                             {
-                                int r = execv(arg->data[0], arg->data);
-                                if (r == -1)
-                                {
-                                    if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                int fd_file;
+                                if (nb_redir == 1){
+                                    fd_file = redirection(&last_command_return, arg->data[i],0,O_RDONLY);
+                                    dup2(fd_file, 0);
+                                }
+                                else if (nb_redir == 2 || nb_redir == 5){
+                                    int option = O_WRONLY | O_EXCL | O_CREAT;
+                                    fd_file = redirection(&last_command_return, arg->data[i],1,option);
+                                    if(nb_redir == 2)
+                                        dup2(fd_file, 1);
                                     else
-                                        remove_jobs();
+                                        dup2(fd_file, 2);
                                 }
-                            }
-                            else if(redir_error == 0)
-                            {
-                                int r = execvp(arg->data[0], arg->data);
-                                if (r == -1)
-                                {
-                                    if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                else if (nb_redir == 3 || nb_redir == 6){
+                                    int option = O_WRONLY | O_CREAT | O_TRUNC;
+                                    fd_file = redirection(&last_command_return, arg->data[i],1,option);
+                                    if(nb_redir == 3)
+                                        dup2(fd_file, 1);
                                     else
-                                        remove_jobs();
+                                        dup2(fd_file, 2);
                                 }
+                                else if (nb_redir == 4 || nb_redir == 7){
+                                    int option = O_WRONLY | O_CREAT | O_APPEND;
+                                    fd_file = redirection(&last_command_return, arg->data[i],1,option);
+                                    if(nb_redir == 4)
+                                        dup2(fd_file, 1);
+                                    else
+                                        dup2(fd_file, 2);
+                                }
+                                if(fd_file == -1)
+                                    redir_error = 1;
                             }
-                            free(arg->data);
-                            free(arg);
-                            free(line);
-                            free(l);
-                            exit(1);
                         }
-                        default:
+
+                        if(first_redir != -1)
+                            arg->data[first_redir] = NULL;
+
+                        if (redir_error == 0 && arg->data[0][0] == '.' || arg->data[0][0] == '/')
                         {
-                            if (arg->esp == 0)
-                                waitpid(pids, &status, 0);
-                            else
-                                add_job(pids, l);
-                            if (WIFEXITED(status))
+                            int r = execv(arg->data[0], arg->data);
+                            if (r == -1)
                             {
-                                last_command_return = WEXITSTATUS(status);
+                                if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                else
+                                    remove_jobs();
                             }
-                            else
-                            {
-                                last_command_return = 1;
-                            }
-                            break;
                         }
+                        else if(redir_error == 0)
+                        {
+                            int r = execvp(arg->data[0], arg->data);
+                            if (r == -1)
+                            {
+                                if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
+                                else
+                                    remove_jobs();
+                            }
+                        }
+                        free(arg->data);
+                        free(arg);
+                        free(line);
+                        free(l);
+                        exit(1);
                     }
-                // }
+                    default:
+                    {
+                        if (arg->esp == 0)
+                            waitpid(pids, &status, 0);
+                        else
+                            add_job(pids, l);
+                        if (WIFEXITED(status))
+                        {
+                            last_command_return = WEXITSTATUS(status);
+                            // if (get_nb_jobs() > 0)
+                            //     set_nb_jobs(get_nb_jobs() - 1);
+                        }
+                        else
+                        {
+                            last_command_return = 1;
+                        }
+                        break;
+                    }
+                }
             }
         free(arg->data);
         free(arg);

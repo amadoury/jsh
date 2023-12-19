@@ -130,7 +130,7 @@ int redirection(int * last_return, char * file, int mode, int option){
 }
 
 void add_job(int pid, char *name){
-
+    //setpgid(pid, 0);
     jobs[jobs_nb] = malloc(sizeof(struct job));
     jobs[jobs_nb]->id = pid;
     jobs[jobs_nb]->state = "Running";
@@ -139,7 +139,6 @@ void add_job(int pid, char *name){
     *(jobs[jobs_nb]->name + strlen(name) - 1) = '\0';
     fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb, jobs[jobs_nb]->id, jobs[jobs_nb]->state, jobs[jobs_nb]->name);
     ++jobs_nb;
-
 }
 
 void remove_jobs()
@@ -155,6 +154,7 @@ void remove_jobs()
                 if (WIFEXITED(status) || WIFSIGNALED(status))
                 {
                     jobs[i]->state = "Done   ";
+                    fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb, jobs[jobs_nb]->id, jobs[jobs_nb]->state, jobs[jobs_nb]->name);
                 }
                 if (WIFSTOPPED(status))
                 {
@@ -216,6 +216,10 @@ void print_jobs()
 int get_nb_jobs()
 {
     return jobs_nb;
+}
+
+int set_nb_jobs(int nb){
+    jobs_nb = nb;
 }
 
 int kill_job(int n, int sig)

@@ -28,6 +28,8 @@ void print_jobs();
 
 int get_nb_jobs();
 
+int set_nb_jobs(int);
+
 void signaux();
 
 void activate_sig();
