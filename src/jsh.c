@@ -29,6 +29,8 @@ int main(int argc, char *argv[], char *envp[])
     while (1)
     {
 
+        remove_jobs(1);
+
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
         if (p == NULL)
@@ -135,7 +137,7 @@ int main(int argc, char *argv[], char *envp[])
 
             else if (strcmp(arg->data[0], "jobs") == 0)
             {
-                remove_jobs();
+                remove_jobs(0);
                 print_jobs();
             }
 
@@ -304,7 +306,7 @@ int main(int argc, char *argv[], char *envp[])
                                 {
                                     if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
                                     else
-                                        remove_jobs();
+                                        remove_jobs(0);
                                 }
                             }
                             else if(redir_error == 0)
@@ -314,7 +316,7 @@ int main(int argc, char *argv[], char *envp[])
                                 {
                                     if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
                                     else
-                                        remove_jobs();
+                                        remove_jobs(0);
                                 }
                             }
                             free(arg->data);

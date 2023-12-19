@@ -142,7 +142,7 @@ void add_job(int pid, char *name){
 
 }
 
-void remove_jobs()
+void remove_jobs(int need_to_print)
 {
 
     for (int i = 0; i < jobs_nb; ++i)
@@ -155,10 +155,26 @@ void remove_jobs()
                 if (WIFEXITED(status) || WIFSIGNALED(status))
                 {
                     jobs[i]->state = "Done   ";
+                    if(need_to_print)
+                        fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
+                    free(jobs[i]->name);
+                    free(jobs[i]);
+                    jobs[i] = NULL;
+                    if (i == jobs_nb - 1)
+                    {
+                        int j = i;
+                        while (j >= 0 && (jobs[i] == NULL || (strcmp(jobs[i]->state, "Done   ") == 0)))
+                        {
+                            --jobs_nb;
+                            --j;
+                        }
+                    }
                 }
                 if (WIFSTOPPED(status))
                 {
                     jobs[i]->state = "Stopped";
+                    if(need_to_print)
+                        fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
                 }
             }
         }
