@@ -137,7 +137,7 @@ void add_job(int pid, char *name){
     jobs[jobs_nb]->name = malloc(sizeof(char) * (strlen(name) + 1));
     strcpy(jobs[jobs_nb]->name, name);
     *(jobs[jobs_nb]->name + strlen(name) - 1) = '\0';
-    fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb, jobs[jobs_nb]->id, jobs[jobs_nb]->state, jobs[jobs_nb]->name);
+    fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb + 1, jobs[jobs_nb]->id, jobs[jobs_nb]->state, jobs[jobs_nb]->name);
     ++jobs_nb;
 
 }

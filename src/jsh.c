@@ -247,7 +247,7 @@ int main(int argc, char *argv[], char *envp[])
                             int is_after_redir = 0;
                             int nb_redir = -1;
                             int first_redir = -1;
-                            int fd_file = -1;
+                            int fd_file = -2;
                             int redir_error = 0;
 
                             for(int i = 1 ; i < arg->len ; ++i)
@@ -261,7 +261,6 @@ int main(int argc, char *argv[], char *envp[])
                                 }
                                 else if(is_after_redir == 1)
                                 {
-                                    int fd_file;
                                     if (nb_redir == 1){
                                         fd_file = redirection(&last_command_return, arg->data[i],0,O_RDONLY);
                                         dup2(fd_file, 0);
