@@ -141,13 +141,11 @@ void add_job(int pid, char *name){
     fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb_last + 1, jobs[jobs_nb_last]->id, jobs[jobs_nb_last]->state, jobs[jobs_nb_last]->name);
     ++jobs_nb_last;
     ++jobs_nb;
-
 }
 
 void remove_jobs(int need_to_print)
 {
-
-    for (int i = 0; i < jobs_nb_last; ++i)
+    for (int i = 0; i < jobs_nb; ++i)
     {
         int status = 0;
         if (jobs[i] != NULL)
@@ -251,6 +249,10 @@ void print_jobs()
 int get_nb_jobs()
 {
     return jobs_nb;
+}
+
+int set_nb_jobs(int nb){
+    jobs_nb = nb;
 }
 
 int kill_job(int n, int sig)
