@@ -211,7 +211,7 @@ int main(int argc, char *argv[], char *envp[])
                         int fd_file = -2;
                         int redir_error = 0;
 
-                         for(int i = 1 ; i < arg->len ; ++i)
+                        for(int i = 1 ; i < arg->len ; ++i)
                         {
                             if(is_str_redirection(arg->data[i]))
                             {
@@ -232,6 +232,7 @@ int main(int argc, char *argv[], char *envp[])
                                     if(nb_redir == 2)
                                         dup2(fd_file, 1);
                                     else
+                                        dup2(fd_file, 2);
                                         remove_jobs(0);
                                 }
                                 else if (nb_redir == 3 || nb_redir == 6){
@@ -240,6 +241,7 @@ int main(int argc, char *argv[], char *envp[])
                                     if(nb_redir == 3)
                                         dup2(fd_file, 1);
                                     else
+                                        dup2(fd_file, 2);
                                         remove_jobs(0);
                                 }
                                 else if (nb_redir == 4 || nb_redir == 7){
@@ -265,7 +267,7 @@ int main(int argc, char *argv[], char *envp[])
                             {
                                 if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
                                 else
-                                    remove_jobs();
+                                    remove_jobs(0);
                             }
                         }
                         else if(redir_error == 0)
@@ -275,7 +277,7 @@ int main(int argc, char *argv[], char *envp[])
                             {
                                 if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
                                 else
-                                    remove_jobs();
+                                    remove_jobs(0);
                             }
                         }
                         free(arg->data);
