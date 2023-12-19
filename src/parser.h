@@ -16,6 +16,7 @@ struct argv_t
 int nb_words(char *);
 
 struct argv_t *split(char *);
+int is_str_redirection(char *);
 int is_redirection(struct argv_t *);
 int which_redirection_str_is(char *);
 int which_redirection(struct argv_t *);
