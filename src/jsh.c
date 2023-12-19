@@ -26,6 +26,9 @@ int main(int argc, char *argv[], char *envp[])
 
     while (1)
     {
+
+        remove_jobs(1);
+
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
         if (p == NULL)
@@ -132,7 +135,7 @@ int main(int argc, char *argv[], char *envp[])
 
             else if (strcmp(arg->data[0], "jobs") == 0)
             {
-                remove_jobs();
+                remove_jobs(0);
                 print_jobs();
             }
 
@@ -208,7 +211,7 @@ int main(int argc, char *argv[], char *envp[])
                         int fd_file = -2;
                         int redir_error = 0;
 
-                        for(int i = 1 ; i < arg->len ; ++i)
+                         for(int i = 1 ; i < arg->len ; ++i)
                         {
                             if(is_str_redirection(arg->data[i]))
                             {
@@ -229,7 +232,7 @@ int main(int argc, char *argv[], char *envp[])
                                     if(nb_redir == 2)
                                         dup2(fd_file, 1);
                                     else
-                                        dup2(fd_file, 2);
+                                        remove_jobs(0);
                                 }
                                 else if (nb_redir == 3 || nb_redir == 6){
                                     int option = O_WRONLY | O_CREAT | O_TRUNC;
@@ -237,7 +240,7 @@ int main(int argc, char *argv[], char *envp[])
                                     if(nb_redir == 3)
                                         dup2(fd_file, 1);
                                     else
-                                        dup2(fd_file, 2);
+                                        remove_jobs(0);
                                 }
                                 else if (nb_redir == 4 || nb_redir == 7){
                                     int option = O_WRONLY | O_CREAT | O_APPEND;

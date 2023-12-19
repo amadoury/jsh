@@ -18,7 +18,7 @@ void do_read_or_write_to_file(int, int, char *, char *, int);
 
 void add_job(int, char *);
 
-void remove_jobs();
+void remove_jobs(int);
 
 void add_job_to_remove(pid_t);
 
@@ -34,6 +34,6 @@ void signaux();
 
 void activate_sig();
 
-int kill_job(int n, int sig);
+int kill_job(int , int);
 
 #endif
