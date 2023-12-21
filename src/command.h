@@ -32,4 +32,6 @@ void activate_sig();
 
 int kill_job(int , int);
 
+void turn_to_background(int);
+
 #endif

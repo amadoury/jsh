@@ -289,9 +289,21 @@ int main(int argc, char *argv[], char *envp[])
                         add_job(pids, l);
                         if (arg->esp == 0)
                         {
-                            waitpid(pids, &status, 0);
-                            remove_jobs(0, 1);
-                        }
+                            tcsetpgrp(STDIN_FILENO, pids);
+                            tcsetpgrp(STDOUT_FILENO, pids);
+                            if (waitpid(pids, &status, WUNTRACED) != -1){
+                                if (!WIFSTOPPED(status))
+                                {
+                                    remove_jobs(0, 1);
+                                }
+                                else
+                                {
+                                    turn_to_background(pids);
+                                }
+                            tcsetpgrp(STDIN_FILENO, getpid());
+                            tcsetpgrp(STDOUT_FILENO, getpid());
+                            }
+                        }                        
                         
                         if (WIFEXITED(status))
                         {
