@@ -289,7 +289,7 @@ int main(int argc, char *argv[], char *envp[])
                         add_job(pids, l);
                         if (arg->esp == 0)
                         {
-                            waitpid(pids, &status, 0);
+                            waitpid(pids, &status, WUNTRACED);
                             remove_jobs(0, 1);
                         }
                         

@@ -168,7 +168,10 @@ void remove_jobs(int need_to_print , pid_t p)
                         if(WIFEXITED(status))
                             jobs[i]->state = "Done   ";
                         else if(WIFSTOPPED(status))
+                        {
                             jobs[i]->state = "Stopped";
+                            jobs[i]->foreground = 0;
+                        }
                         else if (WIFCONTINUED(status))
                             jobs[i]->state = "Running";
                         else
@@ -191,25 +194,27 @@ void remove_jobs(int need_to_print , pid_t p)
         
         for(int i = jobs_nb_last - 1 ; i >= 0 ; --i)
         {
-            if(need_to_print)
-                condition = strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0;
-            else
+            if(jobs[i] != NULL)
             {
-                condition = jobs[i]->foreground;
-                printf("TEST , condition : %d, pgid of job : %d , p : %d\n", condition, jobs[i]->id, p);
+                if(need_to_print)
+                    condition = strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0;
+                else
+                {
+                    condition = jobs[i]->foreground;
+                }
+                
+                if(condition)
+                {
+                    free(jobs[i]->name);
+                    free(jobs[i]);
+                    jobs[i] = NULL;
+                    if(end)
+                        --jobs_nb_last;
+                    --jobs_nb;
+                }
+                else
+                    end = 0;
             }
-            
-            if(jobs[i] != NULL && condition)
-            {
-                free(jobs[i]->name);
-                free(jobs[i]);
-                jobs[i] = NULL;
-                if(end)
-                    --jobs_nb_last;
-                --jobs_nb;
-            }
-            else
-                end = 0;
         }
     }
 }
