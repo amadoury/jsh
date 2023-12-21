@@ -57,7 +57,6 @@ int main(int argc, char *argv[], char *envp[])
         strcat(p, "\001\033[00m\002$ ");
 
         char *line = readline(p);
-        remove_jobs(1);
         free(p);
         free(pwd);
         if (line == NULL)
@@ -289,10 +288,11 @@ int main(int argc, char *argv[], char *envp[])
                     }
                     default:
                     {
+                        add_job(pids, l);   
                         if (arg->esp == 0)
                             waitpid(pids, &status, 0);
-                        else
-                            add_job(pids, l);
+                        // else
+                        //     add_job(pids, l);
                         if (WIFEXITED(status))
                         {
                             last_command_return = WEXITSTATUS(status);
