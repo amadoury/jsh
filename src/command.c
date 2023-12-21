@@ -17,6 +17,7 @@ char *last_path;
 struct job
 {
     int id;
+    int pgid;
     char *state;
     char *name;
 };
@@ -131,8 +132,9 @@ int redirection(int * last_return, char * file, int mode, int option){
 }
 
 void add_job(int pid, char *name){
-
+    setpgid(pid, 0);
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
+    jobs[jobs_nb_last]->pgid = getpgid(pid);
     jobs[jobs_nb_last]->id = pid;
     jobs[jobs_nb_last]->state = "Running";
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
@@ -150,13 +152,13 @@ void remove_jobs(int need_to_print)
         int status = 0;
         if (jobs[i] != NULL)
         {
-            if (waitpid(jobs[i]->id, &status, WNOHANG) > 0)
+            if (waitpid(jobs[i]->id, &status, WNOHANG | WUNTRACED) > 0)
             {
-                if (WIFEXITED(status) || WIFSIGNALED(status))
+                if (WIFEXITED(status) || WIFSIGNALED(status) || WIFSTOPPED(status))
                 {
                     if(WIFEXITED(status))
                         jobs[i]->state = "Done   ";
-                    if(WIFSTOPPED(status))
+                    else if(WIFSTOPPED(status))
                         jobs[i]->state = "Stopped";
                     else
                         jobs[i]->state = "Killed ";
@@ -231,7 +233,7 @@ int set_nb_jobs(int nb){
 int kill_job(int n, int sig)
 {
     if(jobs[n - 1] == NULL) return -1;
-    if(kill(jobs[n - 1]->id, sig) == -1)
+    if(kill(jobs[n - 1]->pgid, sig) == -1)
         return -1;
     else
     {
