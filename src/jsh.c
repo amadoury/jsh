@@ -206,6 +206,8 @@ int main(int argc, char *argv[], char *envp[])
                     {
                         activate_sig();
 
+                        setpgid(0 , 0);
+
                         int is_after_redir = 0;
                         int nb_redir = -1;
                         int first_redir = -1;

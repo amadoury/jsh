@@ -226,10 +226,6 @@ int get_nb_jobs()
     return jobs_nb;
 }
 
-int set_nb_jobs(int nb){
-    jobs_nb = nb;
-}
-
 int kill_job(int n, int sig)
 {
     if(jobs[n - 1] == NULL) return -1;

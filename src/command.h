@@ -14,8 +14,6 @@ char * pwd_jsh();
  
 int redirection(int *, char *, int, int);
 
-void do_read_or_write_to_file(int, int, char *, char *, int);
-
 void add_job(int, char *);
 
 void remove_jobs(int);
@@ -27,8 +25,6 @@ void remove_invalid_command();
 void print_jobs();
 
 int get_nb_jobs();
-
-int set_nb_jobs(int);
 
 void signaux();
 
