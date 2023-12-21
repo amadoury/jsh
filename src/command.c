@@ -152,11 +152,11 @@ void remove_jobs(int need_to_print)
         {
             if (waitpid(jobs[i]->id, &status, WNOHANG) > 0)
             {
-                if (WIFEXITED(status) || WIFSIGNALED(status))
+                if (WIFEXITED(status) || WIFSIGNALED(status) || WIFSTOPPED(status))
                 {
                     if(WIFEXITED(status))
                         jobs[i]->state = "Done   ";
-                    if(WIFSTOPPED(status))
+                    else if(WIFSTOPPED(status))
                         jobs[i]->state = "Stopped";
                     else
                         jobs[i]->state = "Killed ";
@@ -243,10 +243,6 @@ void print_jobs()
 int get_nb_jobs()
 {
     return jobs_nb;
-}
-
-int set_nb_jobs(int nb){
-    jobs_nb = nb;
 }
 
 int kill_job(int n, int sig)
