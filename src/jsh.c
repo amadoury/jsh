@@ -14,6 +14,49 @@
 
 #define SIZE_STR_INPUT 100
 
+void sig_job(int sig)
+{
+    fprintf(stderr, "sig %d arrived\n", sig);
+    // for (int i = 0; i < jobs_nb_last; ++i)
+    // {
+    //     if (jobs[i] != NULL && jobs[i]->id == getpid())
+    //     {
+    //         if(sig == 9)
+    //             jobs[i]->state = "Killed ";
+    //     }
+    // }
+}
+
+void activate_sig()
+{
+    struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash, actKILLbash;
+
+    memset(&actINTbash, 0, sizeof(actINTbash));
+    memset(&actTERMbash, 0, sizeof(actTERMbash));
+    memset(&actTSTPbash, 0, sizeof(actTSTPbash));
+    memset(&actTTINbash, 0, sizeof(actTTINbash));
+    memset(&actQUITbash, 0, sizeof(actQUITbash));
+    memset(&actTTOUbash, 0, sizeof(actTTOUbash));
+    memset(&actKILLbash, 0, sizeof(actKILLbash));
+
+    actINTbash.sa_handler = SIG_DFL;
+    actTERMbash.sa_handler = SIG_DFL;
+    actTSTPbash.sa_handler = sig_job;
+    actTTINbash.sa_handler = SIG_DFL;
+    actQUITbash.sa_handler = SIG_DFL;
+    actTTOUbash.sa_handler = SIG_DFL;
+    actKILLbash.sa_handler = SIG_DFL;
+
+    sigaction(SIGINT, &actINTbash, NULL);
+    sigaction(SIGTERM, &actTERMbash, NULL);
+    sigaction(SIGTSTP, &actTSTPbash, NULL);
+    sigaction(SIGTTIN, &actTTINbash, NULL);
+    sigaction(SIGQUIT, &actQUITbash, NULL);
+    sigaction(SIGTTOU, &actTTOUbash, NULL);
+    sigaction(SIGKILL, &actKILLbash, NULL);
+
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
 
