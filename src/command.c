@@ -142,6 +142,7 @@ void add_job(int pid, char *name){
     strcpy(jobs[jobs_nb_last]->name, name);
     if(*(name + strlen(name) - 1) == '&')
     {
+        jobs[jobs_nb_last]->foreground = 0;
         *(jobs[jobs_nb_last]->name + strlen(name) - 2) = '\0';
         fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb_last + 1, jobs[jobs_nb_last]->id, jobs[jobs_nb_last]->state, jobs[jobs_nb_last]->name);
     }
@@ -199,7 +200,6 @@ void remove_jobs(int need_to_print , pid_t p)
                 else
                 {
                     condition = jobs[i]->foreground;
-                    //printf("TEST , condition : %d, pgid of job : %d , p : %d\n", condition, jobs[i]->id, p);
                 }
             if(condition)
             {

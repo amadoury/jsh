@@ -197,7 +197,7 @@ int main(int argc, char *argv[], char *envp[])
             else
             {
                 pid_t pids = fork();
-                int status;
+                int status = 0;
 
                 switch (pids)
                 {
