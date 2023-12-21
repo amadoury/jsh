@@ -17,8 +17,10 @@ char *last_path;
 struct job
 {
     int id;
+    int pgid;
     char *state;
     char *name;
+    int foreground;
 };
 
 struct job *jobs[512];
@@ -131,38 +133,50 @@ int redirection(int * last_return, char * file, int mode, int option){
 }
 
 void add_job(int pid, char *name){
-
+    setpgid(pid, 0);
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
-    jobs[jobs_nb_last]->id = getpgid pid;
+   // jobs[jobs_nb_last]->pgid = getpgid(pid);
+    jobs[jobs_nb_last]->id = getpgid(pid);
     jobs[jobs_nb_last]->state = "Running";
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
     strcpy(jobs[jobs_nb_last]->name, name);
-    *(jobs[jobs_nb_last]->name + strlen(name) - 2) = '\0';
-    fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb_last + 1, jobs[jobs_nb_last]->id, jobs[jobs_nb_last]->state, jobs[jobs_nb_last]->name);
+    if(*(name + strlen(name) - 1) == '&')
+    {
+        *(jobs[jobs_nb_last]->name + strlen(name) - 2) = '\0';
+        fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb_last + 1, jobs[jobs_nb_last]->id, jobs[jobs_nb_last]->state, jobs[jobs_nb_last]->name);
+    }
+    else
+        jobs[jobs_nb_last]->foreground = 1;
+    
     ++jobs_nb_last;
     ++jobs_nb;
 }
 
-void remove_jobs(int need_to_print)
+void remove_jobs(int need_to_print , pid_t p)
 {
-    for (int i = 0; i < jobs_nb_last; ++i)
+    if(p == -1)
     {
-        int status = 0;
-        if (jobs[i] != NULL)
+        for (int i = 0; i < jobs_nb_last; ++i)
         {
-            if (waitpid(jobs[i]->id, &status, WNOHANG) > 0)
+            int status = 0;
+            if (jobs[i] != NULL)
             {
-                if (WIFEXITED(status) || WIFSIGNALED(status) || WIFSTOPPED(status) || WIF(status))
+                if (waitpid(jobs[i]->id, &status, WNOHANG | WUNTRACED | WCONTINUED) > 0)
                 {
-                    if(WIFEXITED(status))
-                        jobs[i]->state = "Done   ";
-                    else if(WIFSTOPPED(status))
-                        jobs[i]->state = "Stopped";
-                    else
-                        jobs[i]->state = "Killed ";
-                    if(need_to_print)
+                    if (WIFEXITED(status) || WIFSIGNALED(status) || WIFSTOPPED(status) || WIFCONTINUED(status))
                     {
-                        fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
+                        if(WIFEXITED(status))
+                            jobs[i]->state = "Done   ";
+                        else if(WIFSTOPPED(status))
+                            jobs[i]->state = "Stopped";
+                        else if (WIFCONTINUED(status))
+                            jobs[i]->state = "Running";
+                        else
+                            jobs[i]->state = "Killed ";
+                        if(need_to_print)
+                        {
+                            fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
+                        }
                     }
                 }
             }
@@ -171,12 +185,21 @@ void remove_jobs(int need_to_print)
 
     int end = 1;
 
-    if(need_to_print)
+    if(need_to_print || p != -1)
     {
+        int condition = 0;
+        
         for(int i = jobs_nb_last - 1 ; i >= 0 ; --i)
         {
+            if(need_to_print)
+                condition = strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0;
+            else
+            {
+                condition = jobs[i]->foreground;
+                printf("TEST , condition : %d, pgid of job : %d , p : %d\n", condition, jobs[i]->id, p);
+            }
             
-            if(jobs[i] != NULL && (strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0))
+            if(jobs[i] != NULL && condition)
             {
                 free(jobs[i]->name);
                 free(jobs[i]);
@@ -191,30 +214,8 @@ void remove_jobs(int need_to_print)
     }
 }
 
-// void add_job_to_remove(pid_t pid)
-// {
-//     job_to_remove = pid;
-// }
-
-// void remove_invalid_command()
-// {
-//     printf("removing %d\n", job_to_remove);
-//     for (int i = 0; i < jobs_nb_last; ++i)
-//     {
-//         if (jobs[i] != NULL && jobs[i]->id == job_to_remove)
-//         {
-//             free(jobs[i]->name);
-//             free(jobs[i]);
-//             jobs[i] = NULL;
-//             if (i == jobs_nb_last - 1)
-//                 --jobs_nb_last;
-//         }
-//     }
-// }
-
 void print_jobs()
 {
-
     for (int i = 0; i < jobs_nb_last; ++i)
     {
         if (jobs[i] != NULL)
@@ -248,7 +249,7 @@ int get_nb_jobs()
 int kill_job(int n, int sig)
 {
     if(jobs[n - 1] == NULL) return -1;
-    if(kill(jobs[n - 1]->id, sig) == -1)
+    if(kill(-(jobs[n - 1]->id), sig) == -1)
         return -1;
     else
     {
@@ -282,45 +283,45 @@ void signaux()
     sigaction(SIGTTOU, &actTTOUbash, NULL);
 }
 
-// void sig_job(int sig)
-// {
-//     fprintf(stderr, "sig %d arrived\n", sig);
-//     for (int i = 0; i < jobs_nb_last; ++i)
-//     {
-//         if (jobs[i] != NULL && jobs[i]->id == getpid())
-//         {
-//             if(sig == 9)
-//                 jobs[i]->state = "Killed ";
-//         }
-//     }
-// }
+void sig_job(int sig)
+{
+    fprintf(stderr, "sig %d arrived\n", sig);
+    for (int i = 0; i < jobs_nb_last; ++i)
+    {
+        if (jobs[i] != NULL && jobs[i]->id == getpid())
+        {
+            if(sig == 9)
+                jobs[i]->state = "Killed ";
+        }
+    }
+}
 
-// void activate_sig()
-// {
-//     struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash, actKILLbash;
+void activate_sig()
+{
+    struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash, actKILLbash;
 
-//     memset(&actINTbash, 0, sizeof(actINTbash));
-//     memset(&actTERMbash, 0, sizeof(actTERMbash));
-//     memset(&actTSTPbash, 0, sizeof(actTSTPbash));
-//     memset(&actTTINbash, 0, sizeof(actTTINbash));
-//     memset(&actQUITbash, 0, sizeof(actQUITbash));
-//     memset(&actTTOUbash, 0, sizeof(actTTOUbash));
-//     memset(&actKILLbash, 0, sizeof(actKILLbash));
+    memset(&actINTbash, 0, sizeof(actINTbash));
+    memset(&actTERMbash, 0, sizeof(actTERMbash));
+    memset(&actTSTPbash, 0, sizeof(actTSTPbash));
+    memset(&actTTINbash, 0, sizeof(actTTINbash));
+    memset(&actQUITbash, 0, sizeof(actQUITbash));
+    memset(&actTTOUbash, 0, sizeof(actTTOUbash));
+    memset(&actKILLbash, 0, sizeof(actKILLbash));
 
-//     actINTbash.sa_handler = SIG_DFL;
-//     actTERMbash.sa_handler = SIG_DFL;
-//     actTSTPbash.sa_handler = SIG_DFL;
-//     actTTINbash.sa_handler = SIG_DFL;
-//     actQUITbash.sa_handler = SIG_DFL;
-//     actTTOUbash.sa_handler = SIG_DFL;
-//     actKILLbash.sa_handler = SIG_DFL;
+    actINTbash.sa_handler = SIG_DFL;
+    actTERMbash.sa_handler = SIG_DFL;
+    actTSTPbash.sa_handler = SIG_DFL;
+    actTTINbash.sa_handler = SIG_DFL;
+    actQUITbash.sa_handler = SIG_DFL;
+    actTTOUbash.sa_handler = SIG_DFL;
+    actKILLbash.sa_handler = SIG_DFL;
 
-//     sigaction(SIGINT, &actINTbash, NULL);
-//     sigaction(SIGTERM, &actTERMbash, NULL);
-//     sigaction(SIGTSTP, &actTSTPbash, NULL);
-//     sigaction(SIGTTIN, &actTTINbash, NULL);
-//     sigaction(SIGQUIT, &actQUITbash, NULL);
-//     sigaction(SIGTTOU, &actTTOUbash, NULL);
-//     sigaction(SIGKILL, &actKILLbash, NULL);
+    sigaction(SIGINT, &actINTbash, NULL);
+    sigaction(SIGTERM, &actTERMbash, NULL);
+    sigaction(SIGTSTP, &actTSTPbash, NULL);
+    sigaction(SIGTTIN, &actTTINbash, NULL);
+    sigaction(SIGQUIT, &actQUITbash, NULL);
+    sigaction(SIGTTOU, &actTTOUbash, NULL);
+    sigaction(SIGKILL, &actKILLbash, NULL);
 
-// }
+}

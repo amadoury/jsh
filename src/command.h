@@ -16,7 +16,7 @@ int redirection(int *, char *, int, int);
 
 void add_job(int, char *);
 
-void remove_jobs(int);
+void remove_jobs(int, int);
 
 void add_job_to_remove(pid_t);
 

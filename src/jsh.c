@@ -14,49 +14,6 @@
 
 #define SIZE_STR_INPUT 100
 
-void sig_job(int sig)
-{
-    fprintf(stderr, "sig %d arrived\n", sig);
-    // for (int i = 0; i < jobs_nb_last; ++i)
-    // {
-    //     if (jobs[i] != NULL && jobs[i]->id == getpid())
-    //     {
-    //         if(sig == 9)
-    //             jobs[i]->state = "Killed ";
-    //     }
-    // }
-}
-
-void activate_sig()
-{
-    struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash, actKILLbash;
-
-    memset(&actINTbash, 0, sizeof(actINTbash));
-    memset(&actTERMbash, 0, sizeof(actTERMbash));
-    memset(&actTSTPbash, 0, sizeof(actTSTPbash));
-    memset(&actTTINbash, 0, sizeof(actTTINbash));
-    memset(&actQUITbash, 0, sizeof(actQUITbash));
-    memset(&actTTOUbash, 0, sizeof(actTTOUbash));
-    memset(&actKILLbash, 0, sizeof(actKILLbash));
-
-    actINTbash.sa_handler = SIG_DFL;
-    actTERMbash.sa_handler = SIG_DFL;
-    actTSTPbash.sa_handler = sig_job;
-    actTTINbash.sa_handler = SIG_DFL;
-    actQUITbash.sa_handler = SIG_DFL;
-    actTTOUbash.sa_handler = SIG_DFL;
-    actKILLbash.sa_handler = SIG_DFL;
-
-    sigaction(SIGINT, &actINTbash, NULL);
-    sigaction(SIGTERM, &actTERMbash, NULL);
-    sigaction(SIGTSTP, &actTSTPbash, NULL);
-    sigaction(SIGTTIN, &actTTINbash, NULL);
-    sigaction(SIGQUIT, &actQUITbash, NULL);
-    sigaction(SIGTTOU, &actTTOUbash, NULL);
-    sigaction(SIGKILL, &actKILLbash, NULL);
-
-}
-
 int main(int argc, char *argv[], char *envp[])
 {
 
@@ -70,7 +27,7 @@ int main(int argc, char *argv[], char *envp[])
     while (1)
     {
 
-        remove_jobs(1);
+        remove_jobs(1, -1);
 
         char *pwd = pwd_jsh();
         char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
@@ -100,7 +57,6 @@ int main(int argc, char *argv[], char *envp[])
         strcat(p, "\001\033[00m\002$ ");
 
         char *line = readline(p);
-        remove_jobs(1);
         free(p);
         free(pwd);
         if (line == NULL)
@@ -179,7 +135,7 @@ int main(int argc, char *argv[], char *envp[])
 
             else if (strcmp(arg->data[0], "jobs") == 0)
             {
-                remove_jobs(0);
+                remove_jobs(0, -1);
                 print_jobs();
             }
 
@@ -249,8 +205,6 @@ int main(int argc, char *argv[], char *envp[])
                     {
                         activate_sig();
 
-                        setpgid(0 , 0);
-
                         int is_after_redir = 0;
                         int nb_redir = -1;
                         int first_redir = -1;
@@ -311,7 +265,7 @@ int main(int argc, char *argv[], char *envp[])
                             {
                                 if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
                                 else
-                                    remove_jobs(0);
+                                    remove_jobs(0, -1);
                             }
                         }
                         else if(redir_error == 0)
@@ -321,7 +275,7 @@ int main(int argc, char *argv[], char *envp[])
                             {
                                 if (arg->esp == 0) fprintf(stderr, "Unknown command\n");
                                 else
-                                    remove_jobs(0);
+                                    remove_jobs(0, -1);
                             }
                         }
                         free(arg->data);
@@ -332,15 +286,16 @@ int main(int argc, char *argv[], char *envp[])
                     }
                     default:
                     {
+                        add_job(pids, l);
                         if (arg->esp == 0)
+                        {
                             waitpid(pids, &status, 0);
-                        else
-                            add_job(pids, l);
+                            remove_jobs(0, 1);
+                        }
+                        
                         if (WIFEXITED(status))
                         {
                             last_command_return = WEXITSTATUS(status);
-                            // if (get_nb_jobs() > 0)
-                            //     set_nb_jobs(get_nb_jobs() - 1);
                         }
                         else
                         {
