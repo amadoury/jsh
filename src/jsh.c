@@ -288,11 +288,11 @@ int main(int argc, char *argv[], char *envp[])
                     }
                     default:
                     {
-                        add_job(pids, l);   
+                        //add_job(pids, l);
                         if (arg->esp == 0)
                             waitpid(pids, &status, 0);
-                        // else
-                        //     add_job(pids, l);
+                        else
+                            add_job(pids, l);
                         if (WIFEXITED(status))
                         {
                             last_command_return = WEXITSTATUS(status);
