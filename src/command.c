@@ -17,7 +17,6 @@ char *last_path;
 struct job
 {
     int id;
-    int pgid;
     char *state;
     char *name;
     int foreground;
@@ -135,7 +134,6 @@ int redirection(int * last_return, char * file, int mode, int option){
 void add_job(int pid, char *name){
     setpgid(pid, pid);
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
-   // jobs[jobs_nb_last]->pgid = getpgid(pid);
     jobs[jobs_nb_last]->id = getpgid(pid);
     jobs[jobs_nb_last]->state = "Running";
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
