@@ -1,32 +1,12 @@
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <signal.h>
-#include "parser.h"
-
-#define EXIT_VAL 0
-#define MAX_PATH_LENGTH 4096
-#define BLOCK_SIZE 512
+#include "command.h"
 
 char *last_path;
 
-struct job
-{
-    int id;
-    char *state;
-    char *name;
-    int foreground;
-};
-
-struct job *jobs[512];
+struct job *jobs[MAX_JOBS];
 int jobs_nb_last = 0;
 int jobs_nb = 0;
 
-pid_t job_to_remove;
+pid_t job_to_remove = 0;
 
 void exit_jsh(int val)
 {
@@ -99,23 +79,28 @@ int cd(const char *pathname)
     return 0;
 }
 
-/* for redirection */
-int redirection(int * last_return, char * file, int mode, int option){
-    int fd_file ;
-    if (mode){
+int redirection(int *last_return, char *file, int mode, int option)
+{
+    int fd_file;
+    if (mode)
+    {
         fd_file = open(file, option, 0664);
     }
-    else {
+    else
+    {
         fd_file = open(file, option);
     }
 
-    if (fd_file == -1){
-        if (errno == ENOENT){
+    if (fd_file == -1)
+    {
+        if (errno == ENOENT)
+        {
             fprintf(stderr, "%s: No Such File or Directory\n", file);
             *last_return = 1;
             return -1;
         }
-        if (errno == EEXIST){
+        if (errno == EEXIST)
+        {
             fprintf(stderr, "%s: File already exist\n", file);
             *last_return = 1;
             return -1;
@@ -127,18 +112,25 @@ int redirection(int * last_return, char * file, int mode, int option){
             return -1;
         }
     }
-    
+
     return fd_file;
 }
 
-void add_job(int pid, char *name){
+void add_job(int pid, char *name)
+{
+    if (jobs_nb_last == MAX_JOBS)
+    {
+        fprintf(stderr, "Too many jobs\n");
+        return;
+    }
+
     setpgid(pid, pid);
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
     jobs[jobs_nb_last]->id = getpgid(pid);
     jobs[jobs_nb_last]->state = "Running";
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
     strcpy(jobs[jobs_nb_last]->name, name);
-    if(*(name + strlen(name) - 1) == '&')
+    if (*(name + strlen(name) - 1) == '&')
     {
         jobs[jobs_nb_last]->foreground = 0;
         *(jobs[jobs_nb_last]->name + strlen(name) - 2) = '\0';
@@ -146,14 +138,14 @@ void add_job(int pid, char *name){
     }
     else
         jobs[jobs_nb_last]->foreground = 1;
-    
+
     ++jobs_nb_last;
     ++jobs_nb;
 }
 
-void remove_jobs(int need_to_print , pid_t p)
+void remove_jobs(int need_to_print, pid_t p)
 {
-    if(p == -1)
+    if (p == -1)
     {
         for (int i = 0; i < jobs_nb_last; ++i)
         {
@@ -164,9 +156,10 @@ void remove_jobs(int need_to_print , pid_t p)
                 {
                     if (WIFEXITED(status) || WIFSIGNALED(status) || WIFSTOPPED(status) || WIFCONTINUED(status))
                     {
-                        if(WIFEXITED(status))
+                        if (WIFEXITED(status))
                             jobs[i]->state = "Done   ";
-                        else if(WIFSTOPPED(status)){
+                        else if (WIFSTOPPED(status))
+                        {
                             jobs[i]->state = "Stopped";
                             jobs[i]->foreground = 0;
                         }
@@ -174,7 +167,7 @@ void remove_jobs(int need_to_print , pid_t p)
                             jobs[i]->state = "Running";
                         else
                             jobs[i]->state = "Killed ";
-                        if(need_to_print)
+                        if (need_to_print)
                         {
                             fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
                         }
@@ -186,30 +179,31 @@ void remove_jobs(int need_to_print , pid_t p)
 
     int end = 1;
 
-    if(need_to_print || p != -1)
+    if (need_to_print || p != -1)
     {
         int condition = 0;
-        
-        for(int i = jobs_nb_last - 1 ; i >= 0 ; --i)
+
+        for (int i = jobs_nb_last - 1; i >= 0; --i)
         {
-            if (jobs[i] != NULL){
-                if(need_to_print)
+            if (jobs[i] != NULL)
+            {
+                if (need_to_print)
                     condition = strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0;
                 else
                 {
                     condition = jobs[i]->foreground;
                 }
-            if(condition)
-            {
-                free(jobs[i]->name);
-                free(jobs[i]);
-                jobs[i] = NULL;
-                if(end)
-                    --jobs_nb_last;
-                --jobs_nb;
-            }
-            else
-                end = 0;
+                if (condition)
+                {
+                    free(jobs[i]->name);
+                    free(jobs[i]);
+                    jobs[i] = NULL;
+                    if (end)
+                        --jobs_nb_last;
+                    --jobs_nb;
+                }
+                else
+                    end = 0;
             }
         }
     }
@@ -217,7 +211,7 @@ void remove_jobs(int need_to_print , pid_t p)
 
 void turn_to_background(int pid)
 {
-    for(int i = 0; i < jobs_nb_last; ++i)
+    for (int i = 0; i < jobs_nb_last; ++i)
     {
         if (jobs[i] != NULL)
         {
@@ -225,7 +219,7 @@ void turn_to_background(int pid)
             {
                 jobs[i]->foreground = 0;
                 jobs[i]->state = "Stopped";
-                fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name); 
+                fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name);
             }
         }
     }
@@ -242,14 +236,14 @@ void print_jobs()
     }
     int end = 1;
 
-    for(int i = jobs_nb_last - 1 ; i >= 0 ; --i)
+    for (int i = jobs_nb_last - 1; i >= 0; --i)
     {
-        if(jobs[i] != NULL && (strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0))
+        if (jobs[i] != NULL && (strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0))
         {
             free(jobs[i]->name);
             free(jobs[i]);
             jobs[i] = NULL;
-            if(end)
+            if (end)
                 --jobs_nb_last;
             --jobs_nb;
         }
@@ -265,8 +259,9 @@ int get_nb_jobs()
 
 int kill_job(int n, int sig)
 {
-    if(jobs[n - 1] == NULL) return -1;
-    if(kill(-(jobs[n - 1]->id), sig) == -1)
+    if (jobs[n - 1] == NULL)
+        return -1;
+    if (kill(-(jobs[n - 1]->id), sig) == -1)
         return -1;
     else
     {
@@ -307,7 +302,7 @@ void sig_job(int sig)
     {
         if (jobs[i] != NULL && jobs[i]->id == getpid())
         {
-            if(sig == 9)
+            if (sig == 9)
                 jobs[i]->state = "Killed ";
         }
     }
@@ -340,5 +335,4 @@ void activate_sig()
     sigaction(SIGQUIT, &actQUITbash, NULL);
     sigaction(SIGTTOU, &actTTOUbash, NULL);
     sigaction(SIGKILL, &actKILLbash, NULL);
-
 }

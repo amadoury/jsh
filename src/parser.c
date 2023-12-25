@@ -2,6 +2,8 @@
 
 struct argv_t *split(char *line)
 {
+    if (line == NULL)
+        return NULL;
 
     struct argv_t *tab_data = malloc(sizeof(struct argv_t));
     if (tab_data == NULL)
@@ -57,6 +59,9 @@ struct argv_t *split(char *line)
 
 int nb_words(char *line)
 {
+    if (line == NULL)
+        return 0;
+
     size_t len_line = strlen(line);
     int nb_word = 0;
     int flag = 1;
@@ -75,70 +80,89 @@ int nb_words(char *line)
     return nb_word;
 }
 
-/* check is a string contains one of the redirections characters */
-int is_str_redirection(char * str){
-    if (strcmp(str,"<") == 0 || strcmp(str,">") == 0 || strcmp(str,">|") == 0
-    || strcmp(str,">>") == 0 || strcmp(str,"2>") == 0 || strcmp(str,"2>|") == 0
-    || strcmp(str,"2>>") == 0 || strcmp(str,"|") == 0 || strcmp(str,"<(") == 0){
+int is_str_redirection(char *str)
+{
+    if (str == NULL)
+        return 0;
+
+    if (strcmp(str, "<") == 0 || strcmp(str, ">") == 0 || strcmp(str, ">|") == 0 || strcmp(str, ">>") == 0 || strcmp(str, "2>") == 0 || strcmp(str, "2>|") == 0 || strcmp(str, "2>>") == 0 || strcmp(str, "|") == 0 || strcmp(str, "<(") == 0)
+    {
         return 1;
     }
     return 0;
 }
 
-
-/* check if a input line is a redirection if true return the index of the redirection string in arg->data */
-int is_redirection(struct argv_t * arg){
-    if (arg->len >= 3){ 
-        for(int i = 1; i < arg->len; ++i){
-            if (is_str_redirection(arg->data[i])){
+int is_redirection(struct argv_t *arg)
+{
+    if (arg->len >= 3)
+    {
+        for (int i = 1; i < arg->len; ++i)
+        {
+            if (is_str_redirection(arg->data[i]))
+            {
                 return i;
-            }  
+            }
         }
     }
     return 0;
 }
 
- int which_redirection_str_is(char * str){
-    if (strcmp(str,"<") == 0) 
+int which_redirection_str_is(char *str)
+{
+    if (str == NULL)
+        return 0;
+
+    if (strcmp(str, "<") == 0)
         return 1;
-    if (strcmp(str,">") == 0)
+    if (strcmp(str, ">") == 0)
         return 2;
-    if (strcmp(str,">|") == 0)
+    if (strcmp(str, ">|") == 0)
         return 3;
-    if(strcmp(str,">>") == 0)
+    if (strcmp(str, ">>") == 0)
         return 4;
-    if(strcmp(str,"2>") == 0)
+    if (strcmp(str, "2>") == 0)
         return 5;
-    if(strcmp(str,"2>|") == 0)
+    if (strcmp(str, "2>|") == 0)
         return 6;
-    if(strcmp(str,"2>>") == 0)
+    if (strcmp(str, "2>>") == 0)
         return 7;
-    if(strcmp(str,"|") == 0)
+    if (strcmp(str, "|") == 0)
         return 8;
-    if(strcmp(str,"<(") == 0)
+    if (strcmp(str, "<(") == 0)
         return 9;
     else
         return 0;
 }
 
-/* associate redirection with number */
-int which_redirection(struct argv_t * arg){
-    if (arg->len >= 3){ 
-        for(int i = 1; i < arg->len; ++i){
+int which_redirection(struct argv_t *arg)
+{
+    if (arg == NULL)
+        return 0;
+
+    if (arg->len >= 3)
+    {
+        for (int i = 1; i < arg->len; ++i)
+        {
             int r = which_redirection_str_is(arg->data[i]);
-            if (r > 0){
+            if (r > 0)
+            {
                 return r;
             }
         }
     }
     return 0;
 }
-   
-/* return numbers of redirections in one input line */
-int nb_direction(struct argv_t *arg){
+
+int nb_direction(struct argv_t *arg)
+{
+    if (arg == NULL)
+        return 0;
+
     int nb = 0;
-    for(int i = 1; i < arg->len; ++i){
-        if (is_str_redirection(arg->data[i])){
+    for (int i = 1; i < arg->len; ++i)
+    {
+        if (is_str_redirection(arg->data[i]))
+        {
             ++nb;
         }
     }
@@ -147,6 +171,9 @@ int nb_direction(struct argv_t *arg){
 
 struct argv_t *data_cmd(struct argv_t *arg, int redir)
 {
+    if (arg == NULL)
+        return NULL;
+
     struct argv_t *arg_cmd = malloc(sizeof(struct argv_t));
     char **data_cmd = malloc(sizeof(char *) * (redir + 1));
     for (int i = 0; i < redir; ++i)
