@@ -157,3 +157,24 @@ struct argv_t *data_cmd(struct argv_t *arg, int redir) {
 
     return arg_cmd;
 }
+
+int is_process_substitution(struct argv_t *arg) {
+    if (arg == NULL || arg->data == NULL)
+        return 0;
+
+    for (int i = 0; i < arg->len; i++) {
+        char *current_str = arg->data[i];
+        if (current_str[0] == '<' && current_str[1] == '(') {
+            if (current_str[strlen(current_str) - 1] == ')') {
+                return 1;
+            }
+            for (int j = i + 1; j < arg->len; j++) {
+                char *next_str = arg->data[j];
+                if (next_str[strlen(next_str) - 1] == ')') {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}

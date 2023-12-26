@@ -42,6 +42,11 @@ int main(int argc, char *argv[], char *envp[]) {
 
         arg = split(line);
 
+
+        int is_sub = is_process_substitution(arg);
+        fprintf(stderr, "%s\n", is_sub ? "true" : "false");
+
+
         if (arg->len != 0) {
             index_redirec = is_redirection(arg);
             if (strcmp(arg->data[0], "cd") == 0) {

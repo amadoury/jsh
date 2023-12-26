@@ -41,4 +41,7 @@ int nb_direction(struct argv_t *);
 // Crée et retourne une nouvelle structure argv_t pour une commande, en excluant les opérateurs de redirection.
 struct argv_t * data_cmd(struct argv_t *, int);
 
+// Vérifie si la commande contient un processus de substitution.
+int is_process_substitution(struct argv_t *);
+
 #endif 
