@@ -7,15 +7,14 @@
 #include <stdbool.h>
 
 // Structure représentant une commande et ses informations supplémentaires.
-struct argv_t
-{
+struct argv_t {
     char **data;
     int len;
     int esp;
 };
 
 // Divise une ligne de commande en mots et stocke les informations dans une structure argv_t.
-// Gère également les caractères spéciaux comme '&'
+// Gère également les caractères spéciaux comme '&'.
 struct argv_t *split(char *);
 
 // Compte et retourne le nombre de mots dans une ligne.
@@ -36,10 +35,10 @@ int which_redirection_str_is(char *);
 // Retourne un numéro représentant le type de redirection.
 int which_redirection(struct argv_t *);
 
-// Compte et retourne le nombre total de redirections dans une ligne de commande
+// Compte et retourne le nombre total de redirections dans une ligne de commande.
 int nb_direction(struct argv_t *);
 
-// Crée et retourne une nouvelle structure argv_t pour une commande, en excluant les opérateurs de redirection
-struct argv_t * data_cmd(struct argv_t *,int);
+// Crée et retourne une nouvelle structure argv_t pour une commande, en excluant les opérateurs de redirection.
+struct argv_t * data_cmd(struct argv_t *, int);
 
-#endif
+#endif 

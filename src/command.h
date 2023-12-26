@@ -15,8 +15,7 @@
 #define MAX_JOBS 512
 
 // Structure représentant un job dans jsh
-typedef struct job
-{
+typedef struct job {
     int id;
     char *state;
     char *name;
@@ -59,4 +58,4 @@ int kill_job(int n, int sig);
 // Met un job en arrière plan
 void turn_to_background(int pid);
 
-#endif
+#endif 
