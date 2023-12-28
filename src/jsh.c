@@ -17,9 +17,10 @@
 int main(int argc, char *argv[], char *envp[])
 {
 
+    int pid_dad = getpid();
     signaux();
 
-     struct argv_t * arg;
+    struct argv_t * arg;
 
     int last_command_return = 0;
     rl_outstream = stderr;
@@ -187,6 +188,21 @@ int main(int argc, char *argv[], char *envp[])
                     }
                 }
             }
+            else if (strcmp(arg->data[0], "fg") == 0)
+            {
+                do_fg(arg);
+                tcsetpgrp(STDIN_FILENO, getpid());
+                tcsetpgrp(STDOUT_FILENO, getpid());
+            }
+            // else if (strcmp(arg->data[0], "fg") == 0)
+            // {
+            //     if (arg->len > 2){
+
+            //     }
+            //     else{
+            //         fprintf(stderr, "%s have one arguments\n");
+            //     }
+            // }
 
             else if (strcmp(arg->data[0], "?") == 0)
             {

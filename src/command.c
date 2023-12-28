@@ -274,6 +274,55 @@ int kill_job(int n, int sig)
     }
 }
 
+void do_fg(struct argv_t * arg){
+    if (arg->len == 2){
+        if (arg->data[1][0] == '%')
+        {
+            int num_job = atoi(arg->data[1] + 1);
+            if (num_job <= jobs_nb_last){
+                if (jobs[num_job - 1] != NULL){
+                    jobs[num_job - 1]->foreground = 1;
+                    tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
+                    tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
+                    int status;
+                    fprintf(stdout, "%s\n", jobs[num_job - 1]->name);
+                    waitpid(jobs[num_job - 1]->id, &status, 0);
+                    if (WIFEXITED(status)){
+                        free(jobs[num_job - 1]->name);
+                        jobs[num_job - 1] = NULL;
+                        jobs_nb--;
+                        return;
+                    }
+                }
+            } 
+            else
+                fprintf(stderr, "%s %s : the value of job is incorrect\n",arg->data[0], arg->data[1]);
+        }
+        else
+            fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
+    }
+    else
+        fprintf(stderr, "%s have one arguments\n");
+}
+
+// void do_bg(struct argv_t * arg)
+// {
+//     if (arg->len > 2){
+//         if (arg_>data[1][0] == '%')
+//         {
+            
+//         }
+//         else
+//         {
+//             fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
+//         }
+//     }
+//     else
+//     {
+//         fprintf(stderr, "%s have one arguments\n");
+//     }
+// }
+
 void signaux()
 {
     struct sigaction actINTbash, actTERMbash, actTSTPbash, actTTINbash, actQUITbash, actTTOUbash;

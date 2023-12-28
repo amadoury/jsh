@@ -34,4 +34,6 @@ int kill_job(int , int);
 
 void turn_to_background(int);
 
+void do_fg(struct argv_t *);
+
 #endif
