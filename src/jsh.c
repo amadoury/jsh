@@ -42,30 +42,33 @@ int main(int argc, char *argv[], char *envp[]) {
 
         arg = split(line);
 
+        int n_pipes = count_pipes(arg);
 
-        int is_sub = is_process_substitution(arg);
-        fprintf(stderr, "%s\n", is_sub ? "true" : "false");
-
-
-        if (arg->len != 0) {
-            index_redirec = is_redirection(arg);
-            if (strcmp(arg->data[0], "cd") == 0) {
-                build_cd(arg);
-            } else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec) {
-                build_pwd();
-            } else if (strcmp(arg->data[0], "exit") == 0) {
-                build_exit(arg);
-            } else if (strcmp(arg->data[0], "jobs") == 0) {
-                build_jobs(arg);
-            } else if (strcmp(arg->data[0], "kill") == 0 && strcmp(arg->data[1], "-l") != 0) {
-                build_kill(arg);
-            } else if (strcmp(arg->data[0], "?") == 0) {
-                build_interogation();
-            } else {
-                build_external(arg);
+        if (n_pipes > 0) {
+            char **cmd_pipe = split_pipe(arg, n_pipes);
+            build_pipe(cmd_pipe, n_pipes);
+            free(cmd_pipe);
+        } else {
+            if (arg->len != 0) {
+                index_redirec = is_redirection(arg);
+                if (strcmp(arg->data[0], "cd") == 0) {
+                    build_cd(arg);
+                } else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec) {
+                    build_pwd();
+                } else if (strcmp(arg->data[0], "exit") == 0) {
+                    build_exit(arg);
+                } else if (strcmp(arg->data[0], "jobs") == 0) {
+                    build_jobs(arg);
+                } else if (strcmp(arg->data[0], "kill") == 0 && strcmp(arg->data[1], "-l") != 0) {
+                    build_kill(arg);
+                } else if (strcmp(arg->data[0], "?") == 0) {
+                    build_interogation();
+                } else {
+                    build_external(arg);
+                }
+            
+                build_clean(arg);
             }
-        
-            build_clean(arg);
         }
     }
 

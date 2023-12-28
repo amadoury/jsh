@@ -223,3 +223,59 @@ void build_clean(struct argv_t *arg) {
     free(line);
     free(l);
 }
+
+void execute_command(char *cmd) {
+    const int MAX_ARGS = 4096;
+    char *args[MAX_ARGS];
+    char *token = strtok(cmd, " ");
+    int i = 0;
+    while (token != NULL && i < MAX_ARGS) {
+        args[i++] = token;
+        token = strtok(NULL, " ");
+    }
+    args[i] = NULL;
+
+    execvp(args[0], args);
+    
+    perror("execvp");
+    exit(EXIT_FAILURE);
+}
+
+void build_pipe(char **cmds, int n_pipes) {
+    int pipefds[2 * n_pipes];
+
+    for (int i = 0; i < n_pipes; i++) {
+        if (pipe(pipefds + i*2) < 0) {
+            perror("Erreur de création de pipe");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    int pid;
+    for (int i = 0; i < n_pipes + 1; i++) {
+        pid = fork();
+        if (pid == 0) {
+            if (i != 0) {
+                dup2(pipefds[(i - 1) * 2], 0);
+            }
+            if (i != n_pipes) {
+                dup2(pipefds[i * 2 + 1], 1);
+            }
+            for (int j = 0; j < 2 * n_pipes; j++) {
+                close(pipefds[j]);
+            }
+            execute_command(cmds[i]);
+        } else if (pid < 0) {
+            perror("Erreur fork");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    for (int i = 0; i < 2 * n_pipes; i++) {
+        close(pipefds[i]);
+    }
+
+    for (int i = 0; i < n_pipes + 1; i++) {
+        wait(NULL);
+    }
+}
