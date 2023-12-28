@@ -11,84 +11,58 @@
 #include <ctype.h>
 #include "parser.h"
 #include "command.h"
+#include "build.h"
 
-#define SIZE_STR_INPUT 100
+char *pwd;
+int last_command_return = 0;
+int index_redirec;
+char *line;
+char *l;
 
-int main(int argc, char *argv[], char *envp[])
-{
-
-    int pid_dad = getpid();
+int main(int argc, char *argv[], char *envp[]) {
     signaux();
 
-    struct argv_t * arg;
-
-    int last_command_return = 0;
+    struct argv_t *arg;
     rl_outstream = stderr;
 
-    while (1)
-    {
-
+    while (1) {
         remove_jobs(1, -1);
+        
+        char *prompt = build_prompt();
+        line = readline(prompt);
+        free(prompt);
 
-        char *pwd = pwd_jsh();
-        char *p = malloc(sizeof(char) * SIZE_STR_INPUT);
-        if (p == NULL)
-        {
-            fprintf(stdout, "error malloc");
-            exit(1);
-        }
-        *p = '\0';
-        strcat(p, "\001\033[32m\002[");
-        char *nb_jobs_tab = malloc(sizeof(char) * 2);
-        nb_jobs_tab[0] = get_nb_jobs() + '0';
-        nb_jobs_tab[1] = '\0';
-        strcat(p, nb_jobs_tab);
-        free(nb_jobs_tab);
-        strcat(p, "]\001\033[36m\002");
-
-        if(strlen(pwd) > 26){
-            strcat(p, "...");
-            strcat(p, pwd+strlen(pwd)-22);
-        }
-        else
-        {
-            strcat(p, pwd);
-        }
-
-        strcat(p, "\001\033[00m\002$ ");
-
-        char *line = readline(p);
-        free(p);
-        free(pwd);
-        if (line == NULL)
-        {
+        if (line == NULL) {
             exit_jsh(last_command_return);
         }
 
-        char *l = malloc(sizeof(char) * (strlen(line) + 1));
+        l = malloc(sizeof(char) * (strlen(line) + 1));
         strcpy(l, line);
         add_history(l);
 
         arg = split(line);
-    
-        if (arg->len != 0){
-            int index_redirec = is_redirection(arg);
-            if (strcmp(arg->data[0], "cd") == 0){
-                if (arg->len == 1){
-                    last_command_return = cd(NULL);
-                    if (last_command_return == 1)
-                    {
-                        fprintf(stderr, "No such file or directory\n");
-                    }
-                }
-                else
-                {
-                    last_command_return = cd(arg->data[1]);
-                    if (last_command_return == 1)
-                    {
-                        fprintf(stderr, "bash: cd: %s: No such file or directory\n", arg->data[0]);
-                    }
-                }
+ 
+
+        int is_sub = is_process_substitution(arg);
+        fprintf(stderr, "%s\n", is_sub ? "true" : "false");
+
+
+        if (arg->len != 0) {
+            index_redirec = is_redirection(arg);
+            if (strcmp(arg->data[0], "cd") == 0) {
+                build_cd(arg);
+            } else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec) {
+                build_pwd();
+            } else if (strcmp(arg->data[0], "exit") == 0) {
+                build_exit(arg);
+            } else if (strcmp(arg->data[0], "jobs") == 0) {
+                build_jobs(arg);
+            } else if (strcmp(arg->data[0], "kill") == 0 && strcmp(arg->data[1], "-l") != 0) {
+                build_kill(arg);
+            } else if (strcmp(arg->data[0], "?") == 0) {
+                build_interogation();
+            } else {
+                build_external(arg);
             }
 
             else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec){
@@ -339,5 +313,6 @@ int main(int argc, char *argv[], char *envp[])
         free(l);
     }
     }
+
     return 0;
 }

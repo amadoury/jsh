@@ -6,21 +6,42 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-struct argv_t
-{
+// Structure représentant une commande et ses informations supplémentaires.
+struct argv_t {
     char **data;
     int len;
     int esp;
 };
 
+// Divise une ligne de commande en mots et stocke les informations dans une structure argv_t.
+// Gère également les caractères spéciaux comme '&'.
+struct argv_t *split(char *);
+
+// Compte et retourne le nombre de mots dans une ligne.
 int nb_words(char *);
 
-struct argv_t *split(char *);
+// Vérifie si une chaîne donnée correspond à un opérateur de redirection.
+// Retourne 1 si c'est le cas, sinon 0.
 int is_str_redirection(char *);
-int is_redirection(struct argv_t *);
-int which_redirection_str_is(char *);
-int which_redirection(struct argv_t *);
-int nb_direction(struct argv_t *);
-struct argv_t * data_cmd(struct argv_t *,int);
 
-#endif
+// Examine les arguments pour déterminer s'ils contiennent une redirection.
+// Retourne l'index de la première redirection trouvée, sinon 0.
+int is_redirection(struct argv_t *);
+
+// Retourne un numéro associé à une chaîne de redirection spécifique.
+int which_redirection_str_is(char *);
+
+// Identifie le type de redirection dans les arguments donnés.
+// Retourne un numéro représentant le type de redirection.
+int which_redirection(struct argv_t *);
+
+// Compte et retourne le nombre total de redirections dans une ligne de commande.
+int nb_direction(struct argv_t *);
+
+// Crée et retourne une nouvelle structure argv_t pour une commande, en excluant les opérateurs de redirection.
+struct argv_t * data_cmd(struct argv_t *, int);
+
+// Vérifie si la commande contient un processus de substitution.
+int is_process_substitution(struct argv_t *);
+
+#endif 

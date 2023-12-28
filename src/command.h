@@ -1,39 +1,63 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <signal.h>
 
-void exit_jsh(int);
- 
-int cd(const char *);
- 
-char * pwd_jsh();
- 
-int redirection(int *, char *, int, int);
+#define EXIT_VAL 0
+#define MAX_PATH_LENGTH 4096
+#define MAX_JOBS 512
 
-void add_job(int, char *);
+// Structure représentant un job dans jsh
+typedef struct job {
+    int id;
+    char *state;
+    char *name;
+    int foreground;
+} job_t;
 
-void remove_jobs(int, int);
+// Quitte le shell avec une valeur donnée
+void exit_jsh(int val);
 
-void add_job_to_remove(pid_t);
+// Retourne le chemin du répertoire courant
+char *pwd_jsh();
 
-void remove_invalid_command();
+// Change le répertoire courant
+int cd(const char *pathname);
 
+// Gère la redirection des entrées/sorties
+int redirection(int *last_return, char *file, int mode, int option);
+
+// Ajoute un job à la liste des jobs
+void add_job(int pid, char *name);
+
+// Retire un job de la liste des jobs
+void remove_jobs(int need_to_print, pid_t pid);
+
+// Affiche la liste des jobs
 void print_jobs();
 
+// Retourne le nombre de jobs
 int get_nb_jobs();
 
+// Initialise les signaux
 void signaux();
 
+// Active les signaux pour un processus
 void activate_sig();
 
-int kill_job(int , int);
+// Arrête un job
+int kill_job(int n, int sig);
 
-void turn_to_background(int);
+// Met un job en arrière plan
+void turn_to_background(int pid);
 
 void do_fg(struct argv_t *);
 
-#endif
+ #endif
