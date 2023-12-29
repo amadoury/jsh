@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "parser.h"
 
 #define EXIT_VAL 0
 #define MAX_PATH_LENGTH 4096
@@ -20,7 +21,7 @@ typedef struct job {
     char *state;
     char *name;
     int foreground;
-} job_t;
+};
 
 // Quitte le shell avec une valeur donnée
 void exit_jsh(int val);

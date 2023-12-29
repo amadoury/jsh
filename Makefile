@@ -16,4 +16,4 @@ build.o: src/build.c
 	$(CC) $(CCFLAGS) -o build.o -c src/build.c
 
 clean:
-	 rm -f jsh.o parser.o command.o
+	 rm -f jsh.o parser.o command.o build.o
