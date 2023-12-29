@@ -178,3 +178,74 @@ int is_process_substitution(struct argv_t *arg) {
     }
     return 0;
 }
+
+int count_pipes(struct argv_t *args) {
+    if (args == NULL || args->data == NULL)   return 0;
+    if(args->len == 1)  
+        return 0;
+    
+
+    int pipe_count = 0;
+    bool pipe = false;
+
+    for(int i = 1; i < args->len-1; i++) {
+        if(pipe && strcmp(args->data[i], "|") == 0) {
+            return 0;
+        }
+        if (strcmp(args->data[i], "|") == 0) {
+            pipe_count++;
+            pipe = true;
+        }
+        else {
+            pipe = false;
+        }
+    }
+    return pipe_count;
+}
+
+char * get_cmd_pipe(char ** args, int len_char) {
+    if (args == NULL || len_char == 0) return NULL;
+
+    char *cmd = malloc(sizeof(char*));
+    if (cmd == NULL) {
+        fprintf(stderr, "error with malloc in get_cmd_pipe\n");
+        exit(1);
+    }
+    cmd = realloc(cmd, sizeof(char) * (strlen(args[0]) + 1));
+    strcpy(cmd, args[0]);
+    for (int i = 1; i < len_char; ++i) {
+        if(strcmp(args[i], "|") == 0) {
+            break;
+        }
+        cmd = realloc(cmd, sizeof(char) * (strlen(cmd) + strlen(args[i]) + 2));
+        strcat(cmd, " ");
+        strcat(cmd, args[i]);
+    }
+    return cmd;
+}
+
+char **split_pipe(struct argv_t *args, int nb_pipes) {
+    int pipe_count = count_pipes(args);
+    if (pipe_count == 0) {
+        char **single_cmd = malloc(sizeof(char*));
+        if (!single_cmd) return NULL;
+        single_cmd[0] = get_cmd_pipe(args->data, args->len);
+        return single_cmd;
+    }
+
+    char **commands = malloc((pipe_count + 1) * sizeof(char*));
+    if (!commands) return NULL;
+
+    int cmd_start = 0;
+    int cmd_count = 0;
+
+    for (int i = 0; i < args->len; ++i) {
+        if (strcmp(args->data[i], "|") == 0 || i == args->len - 1) {
+            int len_char = i - cmd_start + (i == args->len - 1 ? 1 : 0);
+            commands[cmd_count++] = get_cmd_pipe(args->data + cmd_start, len_char);
+            cmd_start = i + 1;
+        }
+    }
+
+    return commands;
+}

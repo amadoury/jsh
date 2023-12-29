@@ -44,4 +44,13 @@ struct argv_t * data_cmd(struct argv_t *, int);
 // Vérifie si la commande contient un processus de substitution.
 int is_process_substitution(struct argv_t *);
 
+// Compte et retourne le nombre de pipes dans une ligne de commande.
+int count_pipes(struct argv_t *);
+
+// Retourne une chaîne de caractères représentant la commande à exécuter.
+char *get_cmd_pipe(char **, int);
+
+// Divise une ligne de commande en commandes séparées par des pipes.
+char **split_pipe(struct argv_t *, int);
+
 #endif 
