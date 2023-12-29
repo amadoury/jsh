@@ -20,7 +20,7 @@ char *build_prompt() {
     return prompt;
 }
 
-void build_cd(struct argv_t *arg) {
+void build_cd(struct argv_t *arg){
     if (arg->len == 1) {
         last_command_return = cd(NULL);
         if (last_command_return == 1) {

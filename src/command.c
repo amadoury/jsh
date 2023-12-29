@@ -1,3 +1,12 @@
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <signal.h>
+#include "parser.h"
 #include "command.h"
 
 char *last_path;
@@ -241,26 +250,26 @@ void do_fg(struct argv_t * arg){
             fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
     }
     else
-        fprintf(stderr, "%s have one arguments\n");
+        fprintf(stderr, "%s have one arguments\n", arg->data[0]);
 }
 
-// void do_bg(struct argv_t * arg)
-// {
-//     if (arg->len > 2){
-//         if (arg_>data[1][0] == '%')
-//         {
+void do_bg(struct argv_t * arg)
+{
+    if (arg->len > 2){
+        if (arg->data[1][0] == '%')
+        {
             
-//         }
-//         else
-//         {
-//             fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
-//         }
-//     }
-//     else
-//     {
-//         fprintf(stderr, "%s have one arguments\n");
-//     }
-// }
+        }
+        else
+        {
+            fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "%s have one arguments\n", arg->data[0]);
+    }
+}
 
  void signaux()
 {
