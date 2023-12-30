@@ -133,7 +133,7 @@ int redirection(int * last_return, char * file, int mode, int option){
 }
 
 void add_job(int pid, char *name){
-    setpgid(pid, 0);
+    setpgid(pid, pid);
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
    // jobs[jobs_nb_last]->pgid = getpgid(pid);
     jobs[jobs_nb_last]->id = getpgid(pid);
@@ -142,6 +142,7 @@ void add_job(int pid, char *name){
     strcpy(jobs[jobs_nb_last]->name, name);
     if(*(name + strlen(name) - 1) == '&')
     {
+        jobs[jobs_nb_last]->foreground = 0;
         *(jobs[jobs_nb_last]->name + strlen(name) - 2) = '\0';
         fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb_last + 1, jobs[jobs_nb_last]->id, jobs[jobs_nb_last]->state, jobs[jobs_nb_last]->name);
     }
@@ -167,8 +168,7 @@ void remove_jobs(int need_to_print , pid_t p)
                     {
                         if(WIFEXITED(status))
                             jobs[i]->state = "Done   ";
-                        else if(WIFSTOPPED(status))
-                        {
+                        else if(WIFSTOPPED(status)){
                             jobs[i]->state = "Stopped";
                             jobs[i]->foreground = 0;
                         }
@@ -194,26 +194,40 @@ void remove_jobs(int need_to_print , pid_t p)
         
         for(int i = jobs_nb_last - 1 ; i >= 0 ; --i)
         {
-            if(jobs[i] != NULL)
+            if(need_to_print)
+                condition = strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0;
+            else
             {
-                if(need_to_print)
-                    condition = strcmp(jobs[i]->state, "Done   ") == 0 || strcmp(jobs[i]->state, "Killed ") == 0;
-                else
-                {
-                    condition = jobs[i]->foreground;
-                }
-                
-                if(condition)
-                {
-                    free(jobs[i]->name);
-                    free(jobs[i]);
-                    jobs[i] = NULL;
-                    if(end)
-                        --jobs_nb_last;
-                    --jobs_nb;
-                }
-                else
-                    end = 0;
+                condition = jobs[i]->foreground;
+                printf("TEST , condition : %d, pgid of job : %d , p : %d\n", condition, jobs[i]->id, p);
+            }
+            
+            if(jobs[i] != NULL && condition)
+            {
+                free(jobs[i]->name);
+                free(jobs[i]);
+                jobs[i] = NULL;
+                if(end)
+                    --jobs_nb_last;
+                --jobs_nb;
+            }
+            else
+                end = 0;
+        }
+    }
+}
+
+void turn_to_background(int pid)
+{
+    for(int i = 0; i < jobs_nb_last; ++i)
+    {
+        if (jobs[i] != NULL)
+        {
+            if (jobs[i]->foreground == 1)
+            {
+                jobs[i]->foreground = 0;
+                jobs[i]->state = "Stopped";
+                fprintf(stderr, "[%d] %d  %s  %s\n", i + 1, jobs[i]->id, jobs[i]->state, jobs[i]->name); 
             }
         }
     }
