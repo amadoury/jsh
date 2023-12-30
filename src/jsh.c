@@ -47,9 +47,12 @@ int main(int argc, char *argv[], char *envp[]) {
         if (n_pipes > 0) {
             char **cmd_pipe = split_pipe(arg, n_pipes);
             build_pipe(cmd_pipe, n_pipes);
+            for(int i = 0; i <= n_pipes; ++i){
+                free(cmd_pipe[i]);
+            }
             free(cmd_pipe);
-        } 
-        else {
+        }
+        else{
             if (arg->len != 0) {
                 index_redirec = is_redirection(arg);
                 if (strcmp(arg->data[0], "cd") == 0) {
@@ -67,9 +70,9 @@ int main(int argc, char *argv[], char *envp[]) {
                 }
                 else if (strcmp(arg->data[0], "fg") == 0)
                 {
-                do_fg(arg);
-                tcsetpgrp(STDIN_FILENO, getpid());
-                tcsetpgrp(STDOUT_FILENO, getpid());
+                    do_fg(arg);
+                    tcsetpgrp(STDIN_FILENO, getpid());
+                    tcsetpgrp(STDOUT_FILENO, getpid());
                 }
                 else if (strcmp(arg->data[0], "bg") == 0)
                 {
@@ -80,8 +83,8 @@ int main(int argc, char *argv[], char *envp[]) {
                     build_external(arg);
                 }
             }
-            build_clean(arg);
         }
+        build_clean(arg);
     }
     return 0;
 }

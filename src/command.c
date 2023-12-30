@@ -107,7 +107,6 @@ void add_job(int pid, char *name) {
         fprintf(stderr, "Too many jobs\n");
         return;
     }
-
     setpgid(pid, pid);
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
     jobs[jobs_nb_last]->id = getpgid(pid);
@@ -126,7 +125,7 @@ void add_job(int pid, char *name) {
 }
 
 void remove_jobs(int need_to_print, pid_t p) {
-    if (p == -1) {
+    if (p == -1){
         for (int i = 0; i < jobs_nb_last; ++i) {
             int status = 0;
             if (jobs[i] != NULL) {
@@ -222,29 +221,40 @@ int kill_job(int n, int sig) {
     }
 }
 
+void fg(int num_job){
+    if (num_job <= jobs_nb_last){
+        if (jobs[num_job - 1] != NULL){
+            jobs[num_job - 1]->foreground = 1;
+            tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
+            tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
+            int status;
+            fprintf(stdout, "%s\n", jobs[num_job - 1]->name);
+            if (waitpid(jobs[num_job - 1]->id, &status, WUNTRACED) != -1){
+                if (WIFEXITED(status)){
+                    free(jobs[num_job - 1]->name);
+                    jobs[num_job - 1] = NULL;
+                    jobs_nb--;
+                    return;
+                }
+                if (WIFSTOPPED(status)){
+                    jobs[num_job - 1]->foreground = 0;
+                    jobs[num_job - 1]->state = "Stopped";
+                    fprintf(stderr, "[%d] %d  %s  %s\n", num_job, jobs[num_job - 1]->id, jobs[num_job - 1]->state, jobs[num_job - 1]->name); 
+                    return; 
+                }
+            }
+        }
+    } 
+    else
+        fprintf(stderr, "bg %s : the value of job is incorrect\n", num_job);
+}
+
 void do_fg(struct argv_t * arg){
     if (arg->len == 2){
         if (arg->data[1][0] == '%')
         {
             int num_job = atoi(arg->data[1] + 1);
-            if (num_job <= jobs_nb_last){
-                if (jobs[num_job - 1] != NULL){
-                    jobs[num_job - 1]->foreground = 1;
-                    tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
-                    tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
-                    int status;
-                    fprintf(stdout, "%s\n", jobs[num_job - 1]->name);
-                    waitpid(jobs[num_job - 1]->id, &status, 0);
-                    if (WIFEXITED(status)){
-                        free(jobs[num_job - 1]->name);
-                        jobs[num_job - 1] = NULL;
-                        jobs_nb--;
-                        return;
-                    }
-                }
-            } 
-            else
-                fprintf(stderr, "%s %s : the value of job is incorrect\n",arg->data[0], arg->data[1]);
+            fg(num_job);
         }
         else
             fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
