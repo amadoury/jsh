@@ -182,37 +182,39 @@ void execute_command(char **data, int len, int esp){
 }
 
 void build_external(struct argv_t *arg) {
+
     pid_t pids = fork();
     int status = 0;
 
     switch (pids) {
-    case 0: {
-        activate_sig();
-        execute_command(arg->data, arg->len, arg->esp);
-    }
-    default: {
-        add_job(pids, l);
-        if (arg->esp == 0) {
-            tcsetpgrp(STDIN_FILENO, pids);
-            tcsetpgrp(STDOUT_FILENO, pids);
-            if (waitpid(pids, &status, WUNTRACED) != -1) {
-                if (!WIFSTOPPED(status)) {
-                    remove_jobs(0, 1);
-                } else {
-                    turn_to_background(pids);
+        case 0: {
+            activate_sig();
+            execute_command(arg->data, arg->len, arg->esp);
+            break;
+        }
+        default: {
+            add_job(pids, l);
+            if (arg->esp == 0) {
+                tcsetpgrp(STDIN_FILENO, pids);
+                tcsetpgrp(STDOUT_FILENO, pids);
+                if (waitpid(pids, &status, WUNTRACED) != -1) {
+                    if (!WIFSTOPPED(status)) {
+                        remove_jobs(0, 1);
+                    } else {
+                        turn_to_background(pids);
+                    }
+                    tcsetpgrp(STDIN_FILENO, getpid());
+                    tcsetpgrp(STDOUT_FILENO, getpid());
                 }
-                tcsetpgrp(STDIN_FILENO, getpid());
-                tcsetpgrp(STDOUT_FILENO, getpid());
             }
-        }
 
-        if (WIFEXITED(status)) {
-            last_command_return = WEXITSTATUS(status);
-        } else {
-            last_command_return = 1;
+            if (WIFEXITED(status)) {
+                last_command_return = WEXITSTATUS(status);
+            } else {
+                last_command_return = 1;
+            }
+            break;
         }
-        break;
-    }
     }
 }
 
@@ -263,12 +265,12 @@ void build_pipe(char **cmds, int n_pipes) {
     }
 }
 
-void build_substitution(char **data, int len) {
+struct argv_t *build_substitution(char **data, int *len) {
     int start = 0;
     int end = 0;
     int start_space = 0;
     int end_space = 0;
-    if(is_process_substitution(data, len, &start, &start_space, &end, &end_space) == 1){
+    if(is_process_substitution(data, *len, &start, &start_space, &end, &end_space)){
         int tube[2];
         if (pipe(tube) < 0) {
             perror("Erreur de création de pipe");
@@ -283,43 +285,94 @@ void build_substitution(char **data, int len) {
             }
             case 0: {
                 dup2(tube[1], 1);
-                int n_pipes = count_pipes(data, len);
+                int n_pipes = count_pipes(data, *len);
 
                 char **new_data;
+                int new_len;
                 if(start == end){
+                    new_len = 1;
                     new_data = malloc(sizeof(char *));
                     new_data[0] = malloc(sizeof(char) * (strlen(data[start])-2));
                     strncpy(new_data[0], data[start]+2, strlen(data[start])-3);
                 }
                 else{
-                    int l = end - start + 1 - start_space - end_space;
-                    new_data = malloc(sizeof(char *) * l);
+                    new_len = end - start + 1 - start_space - end_space;
+                    new_data = malloc(sizeof(char *) * new_len);
                     if(!start_space){
                         new_data[0] = malloc(sizeof(char) * (strlen(data[start])-1));
                         strncpy(new_data[0], data[start]+2, strlen(data[start])-2);
                     }
-                    for(int k = 1 ; k < l - 1 ; ++k){
+                    for(int k = 1 ; k < new_len - 1 ; ++k){
                         new_data[0] = malloc(sizeof(char) * (strlen(data[start + k])+1));
                         strncpy(new_data[k], data[start + k], strlen(data[start + k]));
                     }
                 }
 
                 if (n_pipes > 0) {
-                    char **cmd_pipe = split_pipe(data + start, len, n_pipes);
+                    char **cmd_pipe = split_pipe(new_data, new_len, n_pipes);
                     build_pipe(cmd_pipe, n_pipes);
                     for(int i = 0; i <= n_pipes; ++i){
                         free(cmd_pipe[i]);
                     }
                     free(cmd_pipe);
                 }
-                break;
+                else{
+                    if (new_len != 0) {
+                        struct argv_t *arg = malloc(sizeof(struct argv_t));
+                        arg->data = new_data;
+                        arg->len = new_len;
+                        arg->esp = 0;
+                        index_redirec = is_redirection(new_data, new_len);
+                        if (strcmp(new_data[0], "cd") == 0) {
+                            build_cd(arg);
+                        } else if (strcmp(new_data[0], "pwd") == 0 && !index_redirec) {
+                            build_pwd();
+                        } else if (strcmp(new_data[0], "exit") == 0) {
+                            build_exit(arg);
+                        } else if (strcmp(new_data[0], "jobs") == 0) {
+                            build_jobs(arg);
+                        } else if (strcmp(new_data[0], "kill") == 0 && strcmp(new_data[1], "-l") != 0) {
+                            build_kill(arg);
+                        } else if (strcmp(new_data[0], "?") == 0) {
+                            build_interogation();
+                        }
+                        else if (strcmp(new_data[0], "fg") == 0)
+                        {
+                            do_fg(arg);
+                            tcsetpgrp(STDIN_FILENO, getpid());
+                            tcsetpgrp(STDOUT_FILENO, getpid());
+                        }
+                        else if (strcmp(new_data[0], "bg") == 0)
+                        {
+                        //do_fg(arg);
+                        }
+                        else
+                        {
+                            execute_command(arg->data, arg->len, arg->esp);
+                        }
+                        free(arg);
+                    }
+                    else{
+                        perror("Erreur new_len = 0");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                return NULL;
             }
             default: {
                 dup2(tube[0], 0);
-                break;
+
+                return build_substitution(split_without_first_substitution(data, len, start, end), len);
+                
             }
         }
         
+    }
+    else{
+        struct argv_t *arg = malloc(sizeof(struct argv_t));
+        arg->data = data;
+        arg->len = *len;
+        return arg;
     }
 
 }

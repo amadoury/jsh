@@ -76,10 +76,10 @@ int is_str_redirection(char *str) {
     return 0;
 }
 
-int is_redirection(struct argv_t *arg) {
-    if (arg->len >= 3) {
-        for (int i = 1; i < arg->len; ++i) {
-            if (is_str_redirection(arg->data[i])) {
+int is_redirection(char **data, int len) {
+    if (len >= 3) {
+        for (int i = 1; i < len; ++i) {
+            if (is_str_redirection(data[i])) {
                 return i;
             }
         }
@@ -296,4 +296,21 @@ char **split_substitution(struct argv_t *args) {
 
 
     return commands;
+}
+
+char **split_without_first_substitution(char **data, int *len, int start, int end){
+    int new_len = start + *len - end - 1;
+    char **new_data = malloc(sizeof(char *) * new_len);
+    int k = 0;
+    for(int i = 0 ; i < start ; ++i){
+        new_data[k] = data[i];
+        ++k;
+    }
+    for(int i = end + 1 ; i < *len ; ++i){
+        new_data[k] = data[i];
+        ++k;
+    }
+
+    *len = k;
+    return new_data;
 }

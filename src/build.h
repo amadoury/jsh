@@ -49,4 +49,6 @@ void execute_command(char **, int, int);
 // Fonction pour gérer les pipes
 void build_pipe(char **cmd_pipe, int n_pipes);
 
+struct argv_t *build_substitution(char **, int *);
+
 #endif 

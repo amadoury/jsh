@@ -16,7 +16,7 @@
 #define MAX_JOBS 512
 
 // Structure représentant un job dans jsh
-typedef struct job {
+struct job {
     int id;
     char *state;
     char *name;

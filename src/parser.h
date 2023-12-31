@@ -26,7 +26,7 @@ int is_str_redirection(char *);
 
 // Examine les arguments pour déterminer s'ils contiennent une redirection.
 // Retourne l'index de la première redirection trouvée, sinon 0.
-int is_redirection(struct argv_t *);
+int is_redirection(char **, int);
 
 // Retourne un numéro associé à une chaîne de redirection spécifique.
 int which_redirection_str_is(char *);
@@ -55,5 +55,7 @@ char **split_pipe(char **, int, int);
 
 // Divise une ligne de commande en commandes séparées par des processus de substitution.
 char **split_substitution(struct argv_t *);
+
+char **split_without_first_substitution(char **, int *, int, int);
 
 #endif 
