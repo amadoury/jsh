@@ -265,3 +265,35 @@ char **split_pipe(char **data, int len, int nb_pipes) {
 
     return commands;
 }
+
+char **split_substitution(struct argv_t *args) {
+    if (args == NULL || args->data == NULL || args->len <= 0) return NULL;
+
+    char **commands = malloc(sizeof(char*) * 2);
+    if (!commands) return NULL;
+
+    commands[0] = calloc(1, sizeof(char));
+    commands[1] = calloc(1, sizeof(char));
+
+    for (int i = 0; i < args->len; ++i) {
+        if (args->data[i][0] == '<' && args->data[i][1] == '(') {
+            for (int k = i+1; k < args->len; k++) {
+                if(args->data[k][strlen(args->data[k]) - 1] == ')') break;
+                
+                commands[1] = realloc(commands[1], strlen(commands[1]) + strlen(args->data[k]) + 2);
+                strcat(commands[1], args->data[k]);
+                strcat(commands[1], " ");
+            }
+            break; 
+        } else {
+            commands[0] = realloc(commands[0], strlen(commands[0]) + strlen(args->data[i]) + 2);
+            strcat(commands[0], args->data[i]);
+            strcat(commands[0], " ");
+        }
+    }
+    if (strlen(commands[0]) > 0) commands[0][strlen(commands[0]) - 1] = '\0';
+    if (strlen(commands[1]) > 0) commands[1][strlen(commands[1]) - 1] = '\0';
+
+
+    return commands;
+}

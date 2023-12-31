@@ -53,4 +53,7 @@ char *get_cmd_pipe(char **, int);
 // Divise une ligne de commande en commandes séparées par des pipes.
 char **split_pipe(char **, int, int);
 
+// Divise une ligne de commande en commandes séparées par des processus de substitution.
+char **split_substitution(struct argv_t *);
+
 #endif 

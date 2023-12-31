@@ -44,6 +44,17 @@ int main(int argc, char *argv[], char *envp[]) {
  
         int n_pipes = count_pipes(arg->data, arg->len);
 
+        char ** tmp = split_substitution(arg);
+        if(tmp != NULL){
+            for(int i = 0; tmp[i] != NULL; ++i){
+                printf("%s\n", tmp[i]);
+                
+            }
+        }
+        else{
+            printf("NULL\n");
+        }
+
         if (n_pipes > 0) {
             char **cmd_pipe = split_pipe(arg->data, arg->len, n_pipes);
             build_pipe(cmd_pipe, n_pipes);
