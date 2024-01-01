@@ -44,11 +44,11 @@ void build_external(struct argv_t *arg);
 void build_clean(struct argv_t *arg);
 
 // Fonction pour exécuter une commande pour pipe
-void execute_command(char **, int, int);
+void execute_command(struct argv_t *);
 
 // Fonction pour gérer les pipes
 void build_pipe(char **cmd_pipe, int n_pipes);
 
-struct argv_t *build_substitution(char **, int *);
+struct argv_t *build_substitution(char **, int *, int);
 
 #endif 

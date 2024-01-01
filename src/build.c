@@ -1,5 +1,6 @@
 #include "build.h"
 #include "parser.h"
+#include <sys/stat.h>
 
 char *build_prompt() {
     char *prompt = malloc(sizeof(char) * MAX_PROMPT_LENGTH);
@@ -115,40 +116,40 @@ void build_interogation() {
     last_command_return = 0;
 }
 
-void execute_command(char **data, int len, int esp){
+void execute_command(struct argv_t *arg){
     int is_after_redir = 0;
     int nb_redir = -1;
     int first_redir = -1;
     int fd_file = -2;
     int redir_error = 0;
 
-    for (int i = 1; i < len; ++i) {
-        if (is_str_redirection(data[i])) {
+    for (int i = 1; i < arg->len; ++i) {
+        if (is_str_redirection(arg->data[i])) {
             is_after_redir = 1;
-            nb_redir = which_redirection_str_is(data[i]);
+            nb_redir = which_redirection_str_is(arg->data[i]);
             if (first_redir == -1)
                 first_redir = i;
         } else if (is_after_redir == 1) {
             if (nb_redir == 1) {
-                fd_file = redirection(&last_command_return, data[i], 0, O_RDONLY);
+                fd_file = redirection(&last_command_return, arg->data[i], 0, O_RDONLY);
                 dup2(fd_file, 0);
             } else if (nb_redir == 2 || nb_redir == 5) {
                 int option = O_WRONLY | O_EXCL | O_CREAT;
-                fd_file = redirection(&last_command_return, data[i], 1, option);
+                fd_file = redirection(&last_command_return, arg->data[i], 1, option);
                 if (nb_redir == 2)
                     dup2(fd_file, 1);
                 else
                     dup2(fd_file, 2);
             } else if (nb_redir == 3 || nb_redir == 6) {
                 int option = O_WRONLY | O_CREAT | O_TRUNC;
-                fd_file = redirection(&last_command_return, data[i], 1, option);
+                fd_file = redirection(&last_command_return, arg->data[i], 1, option);
                 if (nb_redir == 3)
                     dup2(fd_file, 1);
                 else
                     dup2(fd_file, 2);
             } else if (nb_redir == 4 || nb_redir == 7) {
                 int option = O_WRONLY | O_CREAT | O_APPEND;
-                fd_file = redirection(&last_command_return, data[i], 1, option);
+                fd_file = redirection(&last_command_return, arg->data[i], 1, option);
                 if (nb_redir == 4)
                     dup2(fd_file, 1);
                 else
@@ -160,20 +161,20 @@ void execute_command(char **data, int len, int esp){
     }
 
     if (first_redir != -1)
-        data[first_redir] = NULL;
+        arg->data[first_redir] = NULL;
 
-    if (redir_error == 0 && (data[0][0] == '.' || data[0][0] == '/')) {
-        int r = execv(data[0], data);
+    if (redir_error == 0 && (arg->data[0][0] == '.' || arg->data[0][0] == '/')) {
+        int r = execv(arg->data[0], arg->data);
         if (r == -1) {
-            if (esp == 0)
+            if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
             else
                 remove_jobs(0, -1);
         }
     } else if (redir_error == 0) {
-        int r = execvp(data[0], data);
+        int r = execvp(arg->data[0], arg->data);
         if (r == -1) {
-            if (esp == 0)
+            if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
             else
                 remove_jobs(0, -1);
@@ -189,8 +190,8 @@ void build_external(struct argv_t *arg) {
     switch (pids) {
         case 0: {
             activate_sig();
-            execute_command(arg->data, arg->len, arg->esp);
-            break;
+            execute_command(arg);
+            exit(1);
         }
         default: {
             add_job(pids, l);
@@ -249,7 +250,7 @@ void build_pipe(char **cmds, int n_pipes) {
                 close(pipefds[j]);
             }
             struct argv_t * arg = split(cmds[i]);
-            execute_command(arg->data, arg->len, arg->esp);
+            execute_command(arg);
         } else if (pid < 0) {
             perror("Erreur fork");
             exit(EXIT_FAILURE);
@@ -265,27 +266,35 @@ void build_pipe(char **cmds, int n_pipes) {
     }
 }
 
-struct argv_t *build_substitution(char **data, int *len) {
+struct argv_t *build_substitution(char **data, int *len, int fifo_nb) {
     int start = 0;
     int end = 0;
     int start_space = 0;
     int end_space = 0;
-    if(is_process_substitution(data, *len, &start, &start_space, &end, &end_space)){
-        int tube[2];
-        if (pipe(tube) < 0) {
-            perror("Erreur de création de pipe");
-            exit(EXIT_FAILURE);
-        }
+    if(is_process_substitution(data, *len, &start, &start_space, &end, &end_space) == 1){
+        char *fifo_name = malloc(sizeof(char) * 18);
+        // strcpy(fifo_name, "/tmp/substition");
+        strcpy(fifo_name, "substition");
 
-        switch (fork()) {
+        // char nb = (char) fifo_nb,
+        // strcat(fifo_name, "a");
+        mkfifo(fifo_name, 0664);
+
+        int r = fork();
+        switch (r) {
             case -1: {
                 perror("Erreur fork");
                 exit(EXIT_FAILURE);
-                break;
             }
             case 0: {
-                dup2(tube[1], 1);
-                int n_pipes = count_pipes(data, *len);
+                // dup2(tube[0], 1);
+                int fd = open(fifo_name, O_WRONLY);
+                if(fd == -1){
+                    perror("erreur open");
+                    exit(1);
+                }
+                dup2(fd, 1);
+                close(fd);
 
                 char **new_data;
                 int new_len;
@@ -307,6 +316,7 @@ struct argv_t *build_substitution(char **data, int *len) {
                         strncpy(new_data[k], data[start + k], strlen(data[start + k]));
                     }
                 }
+                int n_pipes = count_pipes(new_data, new_len);
 
                 if (n_pipes > 0) {
                     char **cmd_pipe = split_pipe(new_data, new_len, n_pipes);
@@ -348,7 +358,7 @@ struct argv_t *build_substitution(char **data, int *len) {
                         }
                         else
                         {
-                            execute_command(arg->data, arg->len, arg->esp);
+                            execute_command(arg);
                         }
                         free(arg);
                     }
@@ -360,9 +370,15 @@ struct argv_t *build_substitution(char **data, int *len) {
                 return NULL;
             }
             default: {
-                dup2(tube[0], 0);
-
-                return build_substitution(split_without_first_substitution(data, len, start, end), len);
+                // waitpid(r, NULL, 0);
+                int fd = open(fifo_name, O_RDONLY);
+                if(fd == -1){
+                    perror("erreur open");
+                    exit(1);
+                }
+                dup2(fd, 0);
+                close(fd);
+                return build_substitution(split_without_first_substitution(data, len, start, end, fifo_name), len, fifo_nb + 1);
                 
             }
         }

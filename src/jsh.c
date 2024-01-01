@@ -44,12 +44,14 @@ int main(int argc, char *argv[], char *envp[]) {
 
         int new_len = arg->len;
         
-        // struct argv_t *new_arg = build_substitution(arg->data, &new_len);
-        struct argv_t *new_arg = arg;
+        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 1);
+        // struct argv_t *new_arg = arg;
 
+        new_arg->len = new_len;
         new_arg->esp = arg->esp;
  
-        int n_pipes = count_pipes(new_arg->data, arg->len);
+        int n_pipes = count_pipes(new_arg->data, new_arg->len);
+
 
         if (n_pipes > 0) {
             char **cmd_pipe = split_pipe(new_arg->data, new_arg->len, n_pipes);
@@ -92,7 +94,7 @@ int main(int argc, char *argv[], char *envp[]) {
             }
         }
         build_clean(arg);
-        // free(new_arg);
+        free(new_arg);
     }
     return 0;
 }

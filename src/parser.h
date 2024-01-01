@@ -56,6 +56,6 @@ char **split_pipe(char **, int, int);
 // Divise une ligne de commande en commandes séparées par des processus de substitution.
 char **split_substitution(struct argv_t *);
 
-char **split_without_first_substitution(char **, int *, int, int);
+char **split_without_first_substitution(char **, int *, int, int, char *);
 
 #endif 

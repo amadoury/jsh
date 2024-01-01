@@ -196,7 +196,7 @@ int is_process_substitution(char **data, int len, int *start, int *start_space, 
 }
 
 int count_pipes(char **data, int len) {
-    if (data == NULL)   return 0;
+    if (data == NULL)  return 0;
     if(len == 1)  
         return 0;
     
@@ -216,6 +216,7 @@ int count_pipes(char **data, int len) {
             pipe = false;
         }
     }
+
     return pipe_count;
 }
 
@@ -298,14 +299,20 @@ char **split_substitution(struct argv_t *args) {
     return commands;
 }
 
-char **split_without_first_substitution(char **data, int *len, int start, int end){
+char **split_without_first_substitution(char **data, int *len, int start, int end, char *fifo_substition){
     int new_len = start + *len - end - 1;
+    // int new_len = start + *len - end;
+    
     char **new_data = malloc(sizeof(char *) * new_len);
     int k = 0;
     for(int i = 0 ; i < start ; ++i){
         new_data[k] = data[i];
         ++k;
     }
+    // new_data[k] = malloc(sizeof(char) * (strlen(fifo_substition) + 1));
+    // strcpy(new_data[k], fifo_substition);
+    // ++k;
+
     for(int i = end + 1 ; i < *len ; ++i){
         new_data[k] = data[i];
         ++k;
