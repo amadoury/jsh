@@ -76,10 +76,10 @@ int is_str_redirection(char *str) {
     return 0;
 }
 
-int is_redirection(struct argv_t *arg) {
-    if (arg->len >= 3) {
-        for (int i = 1; i < arg->len; ++i) {
-            if (is_str_redirection(arg->data[i])) {
+int is_redirection(char **data, int len) {
+    if (len >= 3) {
+        for (int i = 1; i < len; ++i) {
+            if (is_str_redirection(data[i])) {
                 return i;
             }
         }
@@ -158,19 +158,35 @@ struct argv_t *data_cmd(struct argv_t *arg, int redir) {
     return arg_cmd;
 }
 
-int is_process_substitution(struct argv_t *arg) {
-    if (arg == NULL || arg->data == NULL)
+int is_process_substitution(char **data, int len, int *start, int *start_space, int *end, int *end_space) {
+    if (data == NULL)
         return 0;
 
-    for (int i = 0; i < arg->len; i++) {
-        char *current_str = arg->data[i];
+    for (int i = 0; i < len; i++) {
+        char *current_str = data[i];
         if (current_str[0] == '<' && current_str[1] == '(') {
+            if(strlen(current_str) == 2){
+                *start_space = 1;
+            }
+            else{
+                *start_space = 0;
+            }
+            *start = i;
             if (current_str[strlen(current_str) - 1] == ')') {
+                *end = i;
+                *end_space = 0;
                 return 1;
             }
-            for (int j = i + 1; j < arg->len; j++) {
-                char *next_str = arg->data[j];
+            for (int j = i + 1; j < len; j++) {
+                char *next_str = data[j];
                 if (next_str[strlen(next_str) - 1] == ')') {
+                    if(strlen(current_str) == 1){
+                        *start_space = 1;
+                    }
+                    else{
+                        *start_space = 0;
+                    }
+                    *end = j;
                     return 1;
                 }
             }
@@ -179,20 +195,20 @@ int is_process_substitution(struct argv_t *arg) {
     return 0;
 }
 
-int count_pipes(struct argv_t *args) {
-    if (args == NULL || args->data == NULL)   return 0;
-    if(args->len == 1)  
+int count_pipes(char **data, int len) {
+    if (data == NULL)  return 0;
+    if(len == 1)  
         return 0;
     
 
     int pipe_count = 0;
     bool pipe = false;
 
-    for(int i = 1; i < args->len-1; i++) {
-        if(pipe && strcmp(args->data[i], "|") == 0) {
+    for(int i = 1; i < len-1; i++) {
+        if(pipe && strcmp(data[i], "|") == 0) {
             return 0;
         }
-        if (strcmp(args->data[i], "|") == 0) {
+        if (strcmp(data[i], "|") == 0) {
             pipe_count++;
             pipe = true;
         }
@@ -200,6 +216,7 @@ int count_pipes(struct argv_t *args) {
             pipe = false;
         }
     }
+
     return pipe_count;
 }
 
@@ -224,12 +241,12 @@ char * get_cmd_pipe(char ** args, int len_char) {
     return cmd;
 }
 
-char **split_pipe(struct argv_t *args, int nb_pipes) {
-    int pipe_count = count_pipes(args);
+char **split_pipe(char **data, int len, int nb_pipes) {
+    int pipe_count = count_pipes(data, len);
     if (pipe_count == 0) {
         char **single_cmd = malloc(sizeof(char*));
         if (!single_cmd) return NULL;
-        single_cmd[0] = get_cmd_pipe(args->data, args->len);
+        single_cmd[0] = get_cmd_pipe(data, len);
         return single_cmd;
     }
 
@@ -239,10 +256,10 @@ char **split_pipe(struct argv_t *args, int nb_pipes) {
     int cmd_start = 0;
     int cmd_count = 0;
 
-    for (int i = 0; i < args->len; ++i) {
-        if (strcmp(args->data[i], "|") == 0 || i == args->len - 1) {
-            int len_char = i - cmd_start + (i == args->len - 1 ? 1 : 0);
-            commands[cmd_count++] = get_cmd_pipe(args->data + cmd_start, len_char);
+    for (int i = 0; i < len; ++i) {
+        if (strcmp(data[i], "|") == 0 || i == len - 1) {
+            int len_char = i - cmd_start + (i == len - 1 ? 1 : 0);
+            commands[cmd_count++] = get_cmd_pipe(data + cmd_start, len_char);
             cmd_start = i + 1;
         }
     }
@@ -280,4 +297,27 @@ char **split_substitution(struct argv_t *args) {
 
 
     return commands;
+}
+
+char **split_without_first_substitution(char **data, int *len, int start, int end, char *fifo_substition){
+    int new_len = start + *len - end - 1;
+    // int new_len = start + *len - end;
+    
+    char **new_data = malloc(sizeof(char *) * new_len);
+    int k = 0;
+    for(int i = 0 ; i < start ; ++i){
+        new_data[k] = data[i];
+        ++k;
+    }
+    // new_data[k] = malloc(sizeof(char) * (strlen(fifo_substition) + 1));
+    // strcpy(new_data[k], fifo_substition);
+    // ++k;
+
+    for(int i = end + 1 ; i < *len ; ++i){
+        new_data[k] = data[i];
+        ++k;
+    }
+
+    *len = k;
+    return new_data;
 }

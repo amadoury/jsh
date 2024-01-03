@@ -26,7 +26,7 @@ int is_str_redirection(char *);
 
 // Examine les arguments pour déterminer s'ils contiennent une redirection.
 // Retourne l'index de la première redirection trouvée, sinon 0.
-int is_redirection(struct argv_t *);
+int is_redirection(char **, int);
 
 // Retourne un numéro associé à une chaîne de redirection spécifique.
 int which_redirection_str_is(char *);
@@ -42,18 +42,20 @@ int nb_direction(struct argv_t *);
 struct argv_t * data_cmd(struct argv_t *, int);
 
 // Vérifie si la commande contient un processus de substitution.
-int is_process_substitution(struct argv_t *);
+int is_process_substitution(char **, int, int *, int *,int *, int *);
 
 // Compte et retourne le nombre de pipes dans une ligne de commande.
-int count_pipes(struct argv_t *);
+int count_pipes(char **, int);
 
 // Retourne une chaîne de caractères représentant la commande à exécuter.
 char *get_cmd_pipe(char **, int);
 
 // Divise une ligne de commande en commandes séparées par des pipes.
-char **split_pipe(struct argv_t *, int);
+char **split_pipe(char **, int, int);
 
 // Divise une ligne de commande en commandes séparées par des processus de substitution.
 char **split_substitution(struct argv_t *);
+
+char **split_without_first_substitution(char **, int *, int, int, char *);
 
 #endif 

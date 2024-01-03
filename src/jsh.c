@@ -41,21 +41,20 @@ int main(int argc, char *argv[], char *envp[]) {
         add_history(l);
 
         arg = split(line);
- 
-        int n_pipes = count_pipes(arg);
 
-        // char ** tmp = split_substitution(arg);
-        // if(tmp != NULL){
-        //     for(int i = 0; tmp[i] != NULL; ++i){
-        //         printf("%s\n", tmp[i]);    
-        //     }
-        // }
-        // else{
-        //     printf("NULL\n");
-        //}
+        int new_len = arg->len;
+        
+        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 1);
+        // struct argv_t *new_arg = arg;
+
+        new_arg->len = new_len;
+        new_arg->esp = arg->esp;
+ 
+        int n_pipes = count_pipes(new_arg->data, new_arg->len);
+
 
         if (n_pipes > 0) {
-            char **cmd_pipe = split_pipe(arg, n_pipes);
+            char **cmd_pipe = split_pipe(new_arg->data, new_arg->len, n_pipes);
             build_pipe(cmd_pipe, n_pipes);
             for(int i = 0; i <= n_pipes; ++i){
                 free(cmd_pipe[i]);
@@ -63,38 +62,39 @@ int main(int argc, char *argv[], char *envp[]) {
             free(cmd_pipe);
         }
         else{
-            if (arg->len != 0) {
-                index_redirec = is_redirection(arg);
-                if (strcmp(arg->data[0], "cd") == 0) {
-                    build_cd(arg);
-                } else if (strcmp(arg->data[0], "pwd") == 0 && !index_redirec) {
+            if (new_len != 0) {
+                index_redirec = is_redirection(new_arg->data, new_len);
+                if (strcmp(new_arg->data[0], "cd") == 0) {
+                    build_cd(new_arg);
+                } else if (strcmp(new_arg->data[0], "pwd") == 0 && !index_redirec) {
                     build_pwd();
-                } else if (strcmp(arg->data[0], "exit") == 0) {
-                    build_exit(arg);
-                } else if (strcmp(arg->data[0], "jobs") == 0) {
-                    build_jobs(arg);
-                } else if (strcmp(arg->data[0], "kill") == 0 && strcmp(arg->data[1], "-l") != 0) {
-                    build_kill(arg);
-                } else if (strcmp(arg->data[0], "?") == 0) {
+                } else if (strcmp(new_arg->data[0], "exit") == 0) {
+                    build_exit(new_arg);
+                } else if (strcmp(new_arg->data[0], "jobs") == 0) {
+                    build_jobs(new_arg);
+                } else if (strcmp(new_arg->data[0], "kill") == 0 && strcmp(new_arg->data[1], "-l") != 0) {
+                    build_kill(new_arg);
+                } else if (strcmp(new_arg->data[0], "?") == 0) {
                     build_interogation();
                 }
-                else if (strcmp(arg->data[0], "fg") == 0)
+                else if (strcmp(new_arg->data[0], "fg") == 0)
                 {
-                    do_fg(arg);
+                    do_fg(new_arg);
                     tcsetpgrp(STDIN_FILENO, getpid());
                     tcsetpgrp(STDOUT_FILENO, getpid());
                 }
-                else if (strcmp(arg->data[0], "bg") == 0)
+                else if (strcmp(new_arg->data[0], "bg") == 0)
                 {
-                //do_fg(arg);
+                //do_fg(new_arg);
                 }
                 else
                 {
-                    build_external(arg);
+                    build_external(new_arg);
                 }
             }
         }
         build_clean(arg);
+        free(new_arg);
     }
     return 0;
 }

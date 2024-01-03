@@ -246,7 +246,7 @@ void fg(int num_job){
         }
     } 
     else
-        fprintf(stderr, "bg %s : the value of job is incorrect\n", num_job);
+        fprintf(stderr, "bg %d : the value of job is incorrect\n", num_job);
 }
 
 void do_fg(struct argv_t * arg){
@@ -257,7 +257,7 @@ void do_fg(struct argv_t * arg){
             fg(num_job);
         }
         else
-            fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
+            fprintf(stderr, "%s %%job is the right syntax\n", arg->data[0]);
     }
     else
         fprintf(stderr, "%s have one arguments\n", arg->data[0]);
@@ -272,7 +272,7 @@ void do_bg(struct argv_t * arg)
         }
         else
         {
-            fprintf(stderr, "%s %job is the right syntax\n", arg->data[0]);
+            fprintf(stderr, "%s %%job is the right syntax\n", arg->data[0]);
         }
     }
     else
