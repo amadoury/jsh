@@ -67,10 +67,7 @@ int nb_words(char *line) {
 }
 
 int is_str_redirection(char *str) {
-    if (str == NULL)
-        return 0;
-
-    if (strcmp(str, "<") == 0 || strcmp(str, ">") == 0 || strcmp(str, ">|") == 0 || strcmp(str, ">>") == 0 || strcmp(str, "2>") == 0 || strcmp(str, "2>|") == 0 || strcmp(str, "2>>") == 0 || strcmp(str, "|") == 0 || strcmp(str, "<(") == 0) {
+    if (strcmp(str, "<") == 0 || strcmp(str, ">") == 0 || strcmp(str, ">|") == 0 || strcmp(str, ">>") == 0 || strcmp(str, "2>") == 0 || strcmp(str, "2>|") == 0 || strcmp(str, "2>>") == 0) {
         return 1;
     }
     return 0;
@@ -105,10 +102,6 @@ int which_redirection_str_is(char *str) {
         return 6;
     if (strcmp(str, "2>>") == 0)
         return 7;
-    if (strcmp(str, "|") == 0)
-        return 8;
-    if (strcmp(str, "<(") == 0)
-        return 9;
     else
         return 0;
 }
@@ -140,6 +133,23 @@ int nb_direction(struct argv_t *arg) {
     }
     return nb;
 }
+
+int is_input_well_formed(struct argv_t * arg){
+    for(int i = 0; i <= arg->len - 1; ++i){
+        if (is_str_redirection(arg->data[i]) || strcmp(arg->data[i], "|") == 0){
+            if (i != 0 && (i != arg->len - 1)){
+                if (is_str_redirection(arg->data[i - 1]) || is_str_redirection(arg->data[i + 1]) || (strcmp(arg->data[i - 1], "|") == 0) || (strcmp(arg->data[i + 1], "|") == 0)){
+                    return 0;
+                }
+            }
+            else{
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 
 struct argv_t *data_cmd(struct argv_t *arg, int redir) {
     if (arg == NULL)
@@ -206,7 +216,7 @@ int count_pipes(char **data, int len) {
 
     for(int i = 1; i < len-1; i++) {
         if(pipe && strcmp(data[i], "|") == 0) {
-            return 0;
+            return -1;
         }
         if (strcmp(data[i], "|") == 0) {
             pipe_count++;
@@ -243,11 +253,8 @@ char * get_cmd_pipe(char ** args, int len_char) {
 
 char **split_pipe(char **data, int len, int nb_pipes) {
     int pipe_count = count_pipes(data, len);
-    if (pipe_count == 0) {
-        char **single_cmd = malloc(sizeof(char*));
-        if (!single_cmd) return NULL;
-        single_cmd[0] = get_cmd_pipe(data, len);
-        return single_cmd;
+    if (pipe_count == -1) {
+        return NULL;
     }
 
     char **commands = malloc((pipe_count + 1) * sizeof(char*));

@@ -228,7 +228,9 @@ void fg(int num_job){
             tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
             tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
             int status;
-            fprintf(stdout, "%s\n", jobs[num_job - 1]->name);
+            if (strcmp(jobs[num_job - 1]->state,"Stopped") == 0){
+                kill(jobs[num_job - 1]->id, SIGCONT);
+            }
             if (waitpid(jobs[num_job - 1]->id, &status, WUNTRACED) != -1){
                 if (WIFEXITED(status)){
                     free(jobs[num_job - 1]->name);
@@ -265,10 +267,14 @@ void do_fg(struct argv_t * arg){
 
 void do_bg(struct argv_t * arg)
 {
-    if (arg->len > 2){
+    if (arg->len == 2){
         if (arg->data[1][0] == '%')
         {
-            
+            int num_job = atoi(arg->data[1] + 1);
+            if (jobs[num_job - 1] != NULL){
+                kill(jobs[num_job - 1]->id, SIGCONT);
+                jobs[num_job - 1]->state = "Running";
+            }
         }
         else
         {

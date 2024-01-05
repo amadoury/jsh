@@ -38,6 +38,8 @@ int which_redirection(struct argv_t *);
 // Compte et retourne le nombre total de redirections dans une ligne de commande.
 int nb_direction(struct argv_t *);
 
+int is_input_well_formed(struct argv_t *);
+
 // Crée et retourne une nouvelle structure argv_t pour une commande, en excluant les opérateurs de redirection.
 struct argv_t * data_cmd(struct argv_t *, int);
 
