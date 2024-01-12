@@ -226,7 +226,7 @@ void build_clean(struct argv_t *arg) {
     free(l);
 }
 
-void build_pipe(char **cmds, int n_pipes) {
+void build_pipe_aux(char **cmds, int n_pipes) {
     int pipefds[2 * n_pipes];
 
     for (int i = 0; i < n_pipes; i++) {
@@ -263,6 +263,48 @@ void build_pipe(char **cmds, int n_pipes) {
 
     for (int i = 0; i < n_pipes + 1; i++) {
         wait(NULL);
+    }
+}
+
+void build_pipe(struct argv_t * arg, int n_pipes){
+    pid_t pids = fork();
+    int status = 0;
+
+    switch (pids) {
+        case 0: {
+            activate_sig();
+            //execute_command(arg);
+            char **cmd_pipe = split_pipe(arg->data, arg->len, n_pipes);
+            build_pipe_aux(cmd_pipe,n_pipes);
+            for(int i = 0; i <= n_pipes; ++i){
+                free(cmd_pipe[i]);
+            }
+            free(cmd_pipe);
+            exit(1);
+        }
+        default: {
+            add_job(pids, l);
+            if (arg->esp == 0) {
+                tcsetpgrp(STDIN_FILENO, pids);
+                tcsetpgrp(STDOUT_FILENO, pids);
+                if (waitpid(pids, &status, WUNTRACED) != -1) {
+                    if (!WIFSTOPPED(status)) {
+                        remove_jobs(0, 1);
+                    } else {
+                        turn_to_background(pids);
+                    }
+                    tcsetpgrp(STDIN_FILENO, getpid());
+                    tcsetpgrp(STDOUT_FILENO, getpid());
+                }
+            }
+
+            // if (WIFEXITED(status)) {
+            //     last_command_return = WEXITSTATUS(status);
+            // } else {
+            //     last_command_return = 1;
+            // }
+            break;
+        }
     }
 }
 

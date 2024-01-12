@@ -64,17 +64,18 @@ int main(int argc, char *argv[], char *envp[]) {
         }
         else{
             if (n_pipes > 0) {
-                char **cmd_pipe = split_pipe(new_arg->data, new_arg->len, n_pipes);
-                if (cmd_pipe == NULL){
-                    fprintf(stderr, "Error syntax\n");
-                }
-                else{
-                    build_pipe(cmd_pipe, n_pipes);
-                    for(int i = 0; i <= n_pipes; ++i){
-                        free(cmd_pipe[i]);
-                    }
-                    free(cmd_pipe);
-                }
+                //char **cmd_pipe = split_pipe(new_arg->data, new_arg->len, n_pipes);
+                // if (cmd_pipe == NULL){
+                //     fprintf(stderr, "Error syntax\n");
+                // }
+                // else{
+
+                // }
+                build_pipe(new_arg, n_pipes);
+                // for(int i = 0; i <= n_pipes; ++i){
+                //     free(cmd_pipe[i]);
+                // }
+                // free(cmd_pipe);
             }
             else{
                 if (new_len != 0) {
