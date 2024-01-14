@@ -353,7 +353,7 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
         // strcpy(fifo_name, "/tmp/substition");
         strcpy(fifo_name, "/tmp/substition");
         char a[2];
-        a[0] = (char) fifo_nb;
+        a[0] = fifo_nb + '0';
         a[1] = '\0';
         
         strcat(fifo_name, a);
