@@ -1,6 +1,10 @@
 #include "build.h"
 #include "parser.h"
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 char *build_prompt() {
     char *prompt = malloc(sizeof(char) * MAX_PROMPT_LENGTH);
@@ -46,6 +50,10 @@ void build_pwd() {
 void build_exit(struct argv_t *arg) {
     if (!get_nb_jobs()) {
         if (index_redirec) {
+            for(int i = 0 ; i < arg->nb_fifo ; ++i){
+                free(arg->all_fifo[i]);
+            }
+            free(arg->all_fifo);
             free(arg->data);
             free(arg);
             free(line);
@@ -53,6 +61,10 @@ void build_exit(struct argv_t *arg) {
             exit_jsh(0);
         }
         if (arg->len == 1) {
+            for(int i = 0 ; i < arg->nb_fifo ; ++i){
+                free(arg->all_fifo[i]);
+            }
+            free(arg->all_fifo);
             free(arg->data);
             free(arg);
             free(line);
@@ -60,6 +72,10 @@ void build_exit(struct argv_t *arg) {
             exit_jsh(last_command_return);
         } else if (arg->len == 2) {
             int val_exit = atoi(arg->data[1]);
+            for(int i = 0 ; i < arg->nb_fifo ; ++i){
+                free(arg->all_fifo[i]);
+            }
+            free(arg->all_fifo);
             free(arg->data);
             free(arg);
             free(line);
@@ -190,6 +206,16 @@ void build_external(struct argv_t *arg) {
     switch (pids) {
         case 0: {
             activate_sig();
+            for(int i = 0 ; i < arg->nb_fifo ; ++i){
+
+                int fd = open(arg->all_fifo[i], O_RDONLY);
+                if(fd == -1){
+                    perror("erreur open");
+                    exit(1);
+                }
+                dup2(fd, 0);
+                close(fd);
+            }
             execute_command(arg);
             exit(1);
         }
@@ -208,6 +234,10 @@ void build_external(struct argv_t *arg) {
                     tcsetpgrp(STDOUT_FILENO, getpid());
                 }
             }
+            for(int i = 0 ; i < arg->nb_fifo ; ++i){
+                remove(arg->all_fifo[i]);
+            }
+
 
             if (WIFEXITED(status)) {
                 last_command_return = WEXITSTATUS(status);
@@ -220,6 +250,10 @@ void build_external(struct argv_t *arg) {
 }
 
 void build_clean(struct argv_t *arg) {
+    for(int i = 0 ; i < arg->nb_fifo ; ++i){
+        free(arg->all_fifo[i]);
+    }
+    free(arg->all_fifo);
     free(arg->data);
     free(arg);
     free(line);
@@ -308,19 +342,28 @@ void build_pipe(struct argv_t * arg, int n_pipes){
     }
 }
 
-struct argv_t *build_substitution(char **data, int *len, int fifo_nb) {
+struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all_fifo) {
     int start = 0;
     int end = 0;
     int start_space = 0;
     int end_space = 0;
     if(is_process_substitution(data, *len, &start, &start_space, &end, &end_space) == 1){
-        char *fifo_name = malloc(sizeof(char) * 18);
+        // char *fifo_name = malloc(sizeof(char) * 18);
+        char fifo_name[18];
         // strcpy(fifo_name, "/tmp/substition");
-        strcpy(fifo_name, "substition");
+        strcpy(fifo_name, "/tmp/substition");
+        char a[2];
+        a[0] = (char) fifo_nb;
+        a[1] = '\0';
+        
+        strcat(fifo_name, a);
 
         // char nb = (char) fifo_nb,
         // strcat(fifo_name, "a");
-        mkfifo(fifo_name, 0664);
+        if(mkfifo(fifo_name, 0664) == -1){
+            perror("error create mkfifo");
+            exit(1);
+        }
 
         int r = fork();
         switch (r) {
@@ -338,6 +381,7 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb) {
                 dup2(fd, 1);
                 close(fd);
 
+
                 char **new_data;
                 int new_len;
                 if(start == end){
@@ -348,25 +392,31 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb) {
                 }
                 else{
                     new_len = end - start + 1 - start_space - end_space;
+                    // printf("FINISHED\n");
                     new_data = malloc(sizeof(char *) * new_len);
                     if(!start_space){
                         new_data[0] = malloc(sizeof(char) * (strlen(data[start])-1));
                         strncpy(new_data[0], data[start]+2, strlen(data[start])-2);
                     }
-                    for(int k = 1 ; k < new_len - 1 ; ++k){
-                        new_data[0] = malloc(sizeof(char) * (strlen(data[start + k])+1));
-                        strncpy(new_data[k], data[start + k], strlen(data[start + k]));
+                    // printf("FINISHED\n");
+                    for(int k = 1 ; k < new_len + 1 ; ++k){
+                        new_data[k-1] = malloc(sizeof(char) * (strlen(data[start + k])+1));
+                        // strncpy(new_data[k], data[start + k], strlen(data[start + k]));
+                        strcpy(new_data[k-1], data[start + k]);
                     }
                 }
+
                 int n_pipes = count_pipes(new_data, new_len);
 
+                struct argv_t *arg = malloc(sizeof(struct argv_t));
+                arg->data = new_data;
+                arg->len = new_len;
+                if (is_input_well_formed(arg) == 0){
+                    return arg;
+                }
                 if (n_pipes > 0) {
-                    char **cmd_pipe = split_pipe(new_data, new_len, n_pipes);
-                    build_pipe(cmd_pipe, n_pipes);
-                    for(int i = 0; i <= n_pipes; ++i){
-                        free(cmd_pipe[i]);
-                    }
-                    free(cmd_pipe);
+                    build_pipe(arg, n_pipes);
+
                 }
                 else{
                     if (new_len != 0) {
@@ -409,18 +459,24 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb) {
                         exit(EXIT_FAILURE);
                     }
                 }
-                return NULL;
+                // printf("FINISHED\n");
+                exit(0);
             }
             default: {
                 // waitpid(r, NULL, 0);
-                int fd = open(fifo_name, O_RDONLY);
-                if(fd == -1){
-                    perror("erreur open");
-                    exit(1);
-                }
-                dup2(fd, 0);
-                close(fd);
-                return build_substitution(split_without_first_substitution(data, len, start, end, fifo_name), len, fifo_nb + 1);
+                // wait(NULL);
+
+                // int fd = open(fifo_name, O_RDONLY);
+                // if(fd == -1){
+                //     perror("erreur open");
+                //     exit(1);
+                // }
+                // dup2(fd, 0);
+                // close(fd);
+                // remove(fifo_name);
+                all_fifo[fifo_nb] = malloc(18);
+                strcpy(all_fifo[fifo_nb], fifo_name);
+                return build_substitution(split_without_first_substitution(data, len, start, end, fifo_name), len, fifo_nb + 1, all_fifo);
                 
             }
         }
@@ -430,6 +486,8 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb) {
         struct argv_t *arg = malloc(sizeof(struct argv_t));
         arg->data = data;
         arg->len = *len;
+        arg->all_fifo = all_fifo;
+        arg->nb_fifo = fifo_nb;
         return arg;
     }
 

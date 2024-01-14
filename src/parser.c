@@ -10,6 +10,7 @@ struct argv_t *split(char *line) {
         exit(1);
     }
     tab_data->esp = 0;
+    tab_data->nb_fifo = 0;
     int nb_word = nb_words(line);
 
     char **data;
@@ -39,6 +40,7 @@ struct argv_t *split(char *line) {
         data[nb_word] = NULL;
         tab_data->data = data;
         tab_data->len = nb_word;
+        tab_data->all_fifo = malloc(sizeof(char *) * nb_word);
     } else {
         tab_data->len = 0;
         tab_data->data = NULL;
@@ -190,11 +192,11 @@ int is_process_substitution(char **data, int len, int *start, int *start_space, 
             for (int j = i + 1; j < len; j++) {
                 char *next_str = data[j];
                 if (next_str[strlen(next_str) - 1] == ')') {
-                    if(strlen(current_str) == 1){
-                        *start_space = 1;
+                    if(strlen(current_str) == 1 ||strlen(current_str) == 2){
+                        *end_space = 1;
                     }
                     else{
-                        *start_space = 0;
+                        *end_space = 0;
                     }
                     *end = j;
                     return 1;

@@ -11,6 +11,8 @@ struct argv_t {
     char **data;
     int len;
     int esp;
+    int nb_fifo;
+    char **all_fifo;
 };
 
 // Divise une ligne de commande en mots et stocke les informations dans une structure argv_t.

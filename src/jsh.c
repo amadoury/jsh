@@ -26,12 +26,12 @@ int main(int argc, char *argv[], char *envp[]) {
     rl_outstream = stderr;
 
     while (1) {
+        dup2(stdin, 0);
         remove_jobs(1, -1);
         
         char *prompt = build_prompt();
         line = readline(prompt);
         free(prompt);
-
         if (line == NULL) {
             exit_jsh(last_command_return);
         }
@@ -39,6 +39,7 @@ int main(int argc, char *argv[], char *envp[]) {
         l = malloc(sizeof(char) * (strlen(line) + 1));
         strcpy(l, line);
         add_history(l);
+
 
         arg = split(line);
 
@@ -48,9 +49,11 @@ int main(int argc, char *argv[], char *envp[]) {
         //     printf("%s\n", data[i]);
         // }
 
+
         int new_len = arg->len;
         
-        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 1);
+        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 0, arg->all_fifo);
+        
         // struct argv_t *new_arg = arg;
 
         new_arg->len = new_len;
@@ -64,18 +67,7 @@ int main(int argc, char *argv[], char *envp[]) {
         }
         else{
             if (n_pipes > 0) {
-                //char **cmd_pipe = split_pipe(new_arg->data, new_arg->len, n_pipes);
-                // if (cmd_pipe == NULL){
-                //     fprintf(stderr, "Error syntax\n");
-                // }
-                // else{
-
-                // }
                 build_pipe(new_arg, n_pipes);
-                // for(int i = 0; i <= n_pipes; ++i){
-                //     free(cmd_pipe[i]);
-                // }
-                // free(cmd_pipe);
             }
             else{
                 if (new_len != 0) {
@@ -107,6 +99,7 @@ int main(int argc, char *argv[], char *envp[]) {
                     }
                     else
                     {
+                        
                         build_external(new_arg);
                     }
                 }
@@ -114,6 +107,7 @@ int main(int argc, char *argv[], char *envp[]) {
         }
         build_clean(arg);
         free(new_arg);
+
     }
     return 0;
 }
