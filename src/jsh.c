@@ -26,12 +26,12 @@ int main(int argc, char *argv[], char *envp[]) {
     rl_outstream = stderr;
 
     while (1) {
+        dup2(stdin, 0);
         remove_jobs(1, -1);
         
         char *prompt = build_prompt();
         line = readline(prompt);
         free(prompt);
-
         if (line == NULL) {
             exit_jsh(last_command_return);
         }
@@ -40,11 +40,20 @@ int main(int argc, char *argv[], char *envp[]) {
         strcpy(l, line);
         add_history(l);
 
+
         arg = split(line);
+
+        // char ** data = split_substitution(arg);
+
+        // for(int i = 0; i < 10; ++i){
+        //     printf("%s\n", data[i]);
+        // }
+
 
         int new_len = arg->len;
         
-        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 1);
+        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 0, arg->all_fifo);
+        
         // struct argv_t *new_arg = arg;
 
         new_arg->len = new_len;
@@ -86,6 +95,7 @@ int main(int argc, char *argv[], char *envp[]) {
                     }
                     else
                     {
+                        
                         build_external(new_arg);
                     }
                 }
@@ -93,6 +103,7 @@ int main(int argc, char *argv[], char *envp[]) {
         }
         build_clean(arg);
         free(new_arg);
+
     }
     return 0;
 }
