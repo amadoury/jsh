@@ -42,12 +42,6 @@ int main(int argc, char *argv[], char *envp[]) {
 
         arg = split(line);
 
-        // char ** data = split_substitution(arg);
-
-        // for(int i = 0; i < 10; ++i){
-        //     printf("%s\n", data[i]);
-        // }
-
         int new_len = arg->len;
         
         struct argv_t *new_arg = build_substitution(arg->data, &new_len, 1);
@@ -64,18 +58,7 @@ int main(int argc, char *argv[], char *envp[]) {
         }
         else{
             if (n_pipes > 0) {
-                //char **cmd_pipe = split_pipe(new_arg->data, new_arg->len, n_pipes);
-                // if (cmd_pipe == NULL){
-                //     fprintf(stderr, "Error syntax\n");
-                // }
-                // else{
-
-                // }
                 build_pipe(new_arg, n_pipes);
-                // for(int i = 0; i <= n_pipes; ++i){
-                //     free(cmd_pipe[i]);
-                // }
-                // free(cmd_pipe);
             }
             else{
                 if (new_len != 0) {
@@ -95,15 +78,11 @@ int main(int argc, char *argv[], char *envp[]) {
                     }
                     else if (strcmp(new_arg->data[0], "fg") == 0)
                     {
-                        do_fg(new_arg);
-                        last_command_return = 0;
-                        tcsetpgrp(STDIN_FILENO, getpid());
-                        tcsetpgrp(STDOUT_FILENO, getpid());
+                        build_fg(new_arg);
                     }
                     else if (strcmp(new_arg->data[0], "bg") == 0)
                     {
-                        do_bg(new_arg);
-                        last_command_return = 0;
+                        build_bg(new_arg);
                     }
                     else
                     {

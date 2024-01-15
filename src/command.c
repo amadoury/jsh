@@ -166,7 +166,11 @@ void remove_jobs(int need_to_print, pid_t p) {
                     jobs[i] = NULL;
                     if (end)
                         --jobs_nb_last;
-                    --jobs_nb;
+                    //--jobs_nb;
+                    if (jobs_nb > 0){
+                        --jobs_nb;
+                    }
+
                 } else
                     end = 0;
             }
@@ -201,7 +205,9 @@ void print_jobs() {
             jobs[i] = NULL;
             if (end)
                 --jobs_nb_last;
-            --jobs_nb;
+            if (jobs_nb > 0){
+                --jobs_nb;
+            }
         } else
             end = 0;
     }
@@ -228,18 +234,14 @@ void fg(int num_job){
             tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
             tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
             int status;
-            //if (strcmp(jobs[num_job - 1]->state,"Stopped") == 0){
-                kill(-jobs[num_job - 1]->id, SIGCONT);
-                //jobs_nb = jobs_nb == 0 ? 0 : jobs_nb - 1;
-                if (jobs_nb > 0){
-                    --jobs_nb;
-                }
-            //}
+            kill(-jobs[num_job - 1]->id, SIGCONT);
+            if (jobs_nb > 0){
+                --jobs_nb;
+            }
             if (waitpid(jobs[num_job - 1]->id, &status, WUNTRACED) != -1){
                 if (WIFEXITED(status)){
                     free(jobs[num_job - 1]->name);
                     jobs[num_job - 1] = NULL;
-                    //jobs_nb--;
                     return;
                 }
                 if (WIFSTOPPED(status)){

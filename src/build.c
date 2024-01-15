@@ -226,6 +226,18 @@ void build_clean(struct argv_t *arg) {
     free(l);
 }
 
+void build_fg(struct argv_t * arg){
+    do_fg(arg);
+    last_command_return = 0;
+    tcsetpgrp(STDIN_FILENO, getpid());
+    tcsetpgrp(STDOUT_FILENO, getpid());
+}
+
+void build_bg(struct argv_t * arg){
+    do_bg(arg);
+    last_command_return = 0;
+}
+
 void build_pipe_aux(char **cmds, int n_pipes) {
     int pipefds[2 * n_pipes];
 
