@@ -102,7 +102,7 @@ int redirection(int *last_return, char *file, int mode, int option) {
     return fd_file;
 }
 
-void add_job(int pid, char *name, struct job *child_processus, int nb_processus, int nb_substitutions) {
+void add_job(int pid, char *name, struct job *child_processus, int nb_processus) {
     if (jobs_nb_last == MAX_JOBS) {
         fprintf(stderr, "Too many jobs\n");
         return;
@@ -111,7 +111,6 @@ void add_job(int pid, char *name, struct job *child_processus, int nb_processus,
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
     jobs[jobs_nb_last]->id = getpgid(pid);
     jobs[jobs_nb_last]->state = "Running";
-    jobs[jobs_nb_last]->nb_substitutions = nb_substitutions;
     // jobs[jobs_nb_last]->all_processus = child_processus;
     // jobs[jobs_nb_last]->nb_processus = nb_processus;
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
@@ -127,7 +126,7 @@ void add_job(int pid, char *name, struct job *child_processus, int nb_processus,
     ++jobs_nb;
 }
 
-void remove_jobs(int need_to_print, pid_t p, int *nb_substitutions) {
+void remove_jobs(int need_to_print, pid_t p) {
     if (p == -1){
         for (int i = 0; i < jobs_nb_last; ++i) {
             int status = 0;
@@ -166,18 +165,6 @@ void remove_jobs(int need_to_print, pid_t p, int *nb_substitutions) {
                 if (condition) {
                     free(jobs[i]->name);
                     free(jobs[i]);
-                    if(nb_substitutions != NULL){
-                        // *nb_substitutions -= jobs[i]->nb_substitutions;
-                        // for(int j = *nb_substitutions ; j < *nb_substitutions + jobs[i]->nb_substitutions; ++j){
-                        //     char file[18];
-                        //     strcpy(file, "/tmp/substition");
-                        //     char b[2];
-                        //     b[0] = (char) j;
-                        //     b[1] = '\0';
-                        //     strcpy(file, b);
-                        //     remove(file);
-                        // }
-                    }
                     jobs[i] = NULL;
                     if (end)
                         --jobs_nb_last;

@@ -25,11 +25,9 @@ int main(int argc, char *argv[], char *envp[]) {
     struct argv_t *arg;
     rl_outstream = stderr;
 
-    int fifo_nb = 0;
-
     while (1) {
         
-        remove_jobs(1, -1, &fifo_nb);
+        remove_jobs(1, -1);
         
         char *prompt = build_prompt();
 
@@ -51,14 +49,12 @@ int main(int argc, char *argv[], char *envp[]) {
 
         int new_len = arg->len;
 
-        struct argv_t *new_arg = build_substitution(arg->data, &new_len, fifo_nb, arg->all_fifo);
+        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 0, arg->all_fifo);
         new_arg->esp = 0;
 
 
         new_arg->len = new_len;
         new_arg->esp = arg->esp;
-
-        fifo_nb += new_arg->nb_fifo;
  
         int n_pipes = count_pipes(new_arg->data, new_arg->len);
 
@@ -102,24 +98,14 @@ int main(int argc, char *argv[], char *envp[]) {
                 }
             }
         }
-        if(!arg->esp){
+        // if(!arg->esp){
             for(int i = 0 ; i < new_arg->nb_fifo ; ++i){
                 remove(new_arg->all_fifo[i]);
-                --fifo_nb;
             }
-        }
+        // }
         
-        // free(new_arg->data[new_arg->len]);
         build_clean(arg, new_arg->nb_fifo);
-        // for(int i = 0 ; i < arg->nb_fifo ; ++i){
-        //     free(arg->all_fifo[i]);
-        // }
-        // free(arg->all_fifo);
 
-        // for(int i = 0 ; i < new_arg->len ; ++i){
-        //     free(new_arg->data[i]);
-        // }
-        // free(new_arg->data);
         free(new_arg);
 
     }

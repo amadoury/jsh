@@ -94,7 +94,7 @@ void build_exit(struct argv_t *arg) {
 }
 
 void build_jobs() {
-    remove_jobs(0, -1, NULL);
+    remove_jobs(0, -1);
     print_jobs();
 }
 
@@ -188,7 +188,7 @@ void execute_command(struct argv_t *arg){
             if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
             else
-                remove_jobs(0, -1, NULL);
+                remove_jobs(0, -1);
         }
     } else if (redir_error == 0) {
         int r = execvp(arg->data[0], arg->data);
@@ -196,7 +196,7 @@ void execute_command(struct argv_t *arg){
             if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
             else
-                remove_jobs(0, -1, NULL);
+                remove_jobs(0, -1);
         }
     }
 }
@@ -214,13 +214,13 @@ void build_external(struct argv_t *arg) {
             exit(1);
         }
         default: {
-            add_job(pids, l, NULL, 0, 0);
+            add_job(pids, l, NULL, 0);
             if (arg->esp == 0) {
                 tcsetpgrp(STDIN_FILENO, pids);
                 tcsetpgrp(STDOUT_FILENO, pids);
                 if (waitpid(pids, &status, WUNTRACED) != -1) {
                     if (!WIFSTOPPED(status)) {
-                        remove_jobs(0, 1, NULL);
+                        remove_jobs(0, 1);
                     } else {
                         turn_to_background(pids);
                     }
@@ -329,13 +329,13 @@ void build_pipe(struct argv_t * arg, int n_pipes){
         }
         default: {
             // add_job(pids, l, child_processus, n_pipes);
-            add_job(pids, l, NULL, n_pipes, arg->nb_fifo);
+            add_job(pids, l, NULL, n_pipes);
             if (arg->esp == 0) {
                 tcsetpgrp(STDIN_FILENO, pids);
                 tcsetpgrp(STDOUT_FILENO, pids);
                 if (waitpid(pids, &status, WUNTRACED) != -1) {
                     if (!WIFSTOPPED(status)) {
-                        remove_jobs(0, 1, NULL);
+                        remove_jobs(0, 1);
                     } else {
                         turn_to_background(pids);
                     }

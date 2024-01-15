@@ -1,2 +1,0 @@
-#ENABLE VALGRIND
-$ ./my_cat <( echo 123 | tail ) | head
