@@ -167,16 +167,16 @@ void remove_jobs(int need_to_print, pid_t p, int *nb_substitutions) {
                     free(jobs[i]->name);
                     free(jobs[i]);
                     if(nb_substitutions != NULL){
-                        *nb_substitutions -= jobs[i]->nb_substitutions;
-                        for(int j = *nb_substitutions ; j < *nb_substitutions + jobs[i]->nb_substitutions; ++j){
-                            char file[18];
-                            strcpy(file, "/tmp/substition");
-                            char b[2];
-                            b[0] = (char) j;
-                            b[1] = '\0';
-                            strcpy(file, b);
-                            remove(file);
-                        }
+                        // *nb_substitutions -= jobs[i]->nb_substitutions;
+                        // for(int j = *nb_substitutions ; j < *nb_substitutions + jobs[i]->nb_substitutions; ++j){
+                        //     char file[18];
+                        //     strcpy(file, "/tmp/substition");
+                        //     char b[2];
+                        //     b[0] = (char) j;
+                        //     b[1] = '\0';
+                        //     strcpy(file, b);
+                        //     remove(file);
+                        // }
                     }
                     jobs[i] = NULL;
                     if (end)
