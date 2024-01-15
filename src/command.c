@@ -230,9 +230,8 @@ void fg(int num_job){
             tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
             tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
             int status;
-            //if (strcmp(jobs[num_job - 1]->state,"Stopped") == 0){
+            
                 kill(-jobs[num_job - 1]->id, SIGCONT);
-                //jobs_nb = jobs_nb == 0 ? 0 : jobs_nb - 1;
                 if (jobs_nb > 0){
                     --jobs_nb;
                 }

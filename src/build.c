@@ -210,20 +210,7 @@ void build_external(struct argv_t *arg) {
     switch (pids) {
         case 0: {
             activate_sig();
-            // for(int i = 0 ; i < arg->nb_fifo ; ++i){
-            //     // printf("%s fifo i\n", arg->all_fifo[i]);
-            //     // int fd = open(arg->all_fifo[i], O_RDONLY);
-            //     // if(fd == -1){
-            //     //     perror("erreur open");
-            //     //     exit(1);
-            //     // }
-            //     // dup2(fd, 0);
-            //     // close(fd);
-            // }
 
-            // for(int i = 0 ; i < arg->len ; ++i){
-            //     printf("%s data %d\n", arg->data[i], i);
-            // }
             execute_command(arg);
             exit(1);
         }
@@ -396,9 +383,8 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
     int start_space = 0;
     int end_space = 0;
     if(is_process_substitution(data, *len, &start, &start_space, &end, &end_space) == 1){
-        // char *fifo_name = malloc(sizeof(char) * 18);
+
         char fifo_name[18];
-        // strcpy(fifo_name, "/tmp/substition");
         strcpy(fifo_name, "/tmp/substition");
         char a[2];
         a[0] = fifo_nb + '0';
@@ -406,8 +392,6 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
         
         strcat(fifo_name, a);
 
-        // char nb = (char) fifo_nb,
-        // strcat(fifo_name, "a");
         if(mkfifo(fifo_name, 0664) == -1){
             perror("error create mkfifo");
             exit(1);
@@ -420,7 +404,7 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
                 exit(EXIT_FAILURE);
             }
             case 0: {
-                // dup2(tube[0], 1);
+
                 int fd = open(fifo_name, O_WRONLY);
                 if(fd == -1){
                     perror("erreur open");
@@ -440,16 +424,15 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
                 }
                 else{
                     new_len = end - start + 1 - start_space - end_space;
-                    // printf("FINISHED\n");
+
                     new_data = malloc(sizeof(char *) * new_len);
                     if(!start_space){
                         new_data[0] = malloc(sizeof(char) * (strlen(data[start])-1));
                         strncpy(new_data[0], data[start]+2, strlen(data[start])-2);
                     }
-                    // printf("FINISHED\n");
+
                     for(int k = 1 ; k < new_len + 1 ; ++k){
                         new_data[k-1] = malloc(sizeof(char) * (strlen(data[start + k])+1));
-                        // strncpy(new_data[k], data[start + k], strlen(data[start + k]));
                         strcpy(new_data[k-1], data[start + k]);
                     }
                 }
@@ -495,7 +478,7 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
                         }
                         else if (strcmp(new_data[0], "bg") == 0)
                         {
-                        //do_fg(arg);
+                            do_bg(new_arg);
                         }
                         else
                         {
@@ -508,21 +491,10 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
                         exit(EXIT_FAILURE);
                     }
                 }
-                // printf("FINISHED\n");
                 exit(0);
             }
             default: {
-                // waitpid(r, NULL, 0);
-                // wait(NULL);
-
-                // int fd = open(fifo_name, O_RDONLY);
-                // if(fd == -1){
-                //     perror("erreur open");
-                //     exit(1);
-                // }
-                // dup2(fd, 0);
-                // close(fd);
-                // remove(fifo_name);
+                
                 all_fifo[fifo_nb] = malloc(18);
                 strcpy(all_fifo[fifo_nb], fifo_name);
                 return build_substitution(split_without_first_substitution(data, len, start, end, fifo_name), len, fifo_nb + 1, all_fifo);

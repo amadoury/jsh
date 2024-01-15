@@ -26,13 +26,8 @@ int main(int argc, char *argv[], char *envp[]) {
     rl_outstream = stderr;
 
     int test = 0;
-    // int old_stdin = dup(0);
 
     while (1) {
-        // if(test == 1) printf("old_stdin %d\n", old_stdin);
-        // dup2(old_stdin, 0);
-        // close(old_stdin);
-        // old_stdin = dup(0);
         
         remove_jobs(1, -1);
         
@@ -53,58 +48,12 @@ int main(int argc, char *argv[], char *envp[]) {
 
         arg = split(line);
 
-        // char ** data = split_substitution(arg);
-
-        // for(int i = 0; i < 10; ++i){
-        //     printf("%s\n", data[i]);
-        // }
-
 
         int new_len = arg->len;
 
-        // char ***all_args = malloc(sizeof(char **) * arg->len);
-        // int *all_args_len = malloc(sizeof(int) * arg->len);
-        
-        // struct argv_t *new_arg = build_substitution(arg->data, &new_len, 0, arg->all_fifo, all_args, all_args_len);
         struct argv_t *new_arg = build_substitution(arg->data, &new_len, 0, arg->all_fifo);
         new_arg->esp = 0;
 
-
-        // for(int i = 0 ; i < new_arg->nb_fifo ; ++i){
-        //     printf("substitution %d :\n\n", i);
-        //     for(int j = 0 ; j < all_args_len[i] ; ++j){
-        //         printf("%s\n", all_args[i][j]);
-        //     }
-        // }
-        // printf("\nmain command :\n");
-        // for(int j = 0 ; j < new_arg->len ; ++j){
-        //     printf("%s\n", new_arg->data[j]);
-        // }
-        
-        
-        // for(int i = 0 ; i < new_arg->nb_fifo ; ++i){
-        //     if(!fork()){
-        //         int fd = open(new_arg->all_fifo[i], O_WRONLY);
-        //         if(fd == -1){
-        //             perror("erreur open");
-        //             exit(1);
-        //         }
-        //         printf("TTTTTTTTTTTTTTTTTTTTTTTTTT\n");
-        //         dup2(fd, 1);
-        //         close(fd);
-
-        //         struct argv_t *arg_sub = malloc(sizeof(struct argv_t));
-        //         // arg_sub->data = all_args[i];
-        //         // arg_sub->len = all_args_len[i];
-        //         // execute_command(arg_sub);
-        //         exit(0);
-        //     }
-        // }
-        
-        
-
-        
-        // struct argv_t *new_arg = arg;
 
         new_arg->len = new_len;
         new_arg->esp = arg->esp;
@@ -156,7 +105,6 @@ int main(int argc, char *argv[], char *envp[]) {
             }
         }
         for(int i = 0 ; i < new_arg->nb_fifo ; ++i){
-            // printf("fifo remove %s\n", new_arg->all_fifo[i]);
             remove(new_arg->all_fifo[i]);
             test = 1;
         }

@@ -310,7 +310,6 @@ char **split_substitution(struct argv_t *args) {
 
 char **split_without_first_substitution(char **data, int *len, int start, int end, char *fifo_substition){
     int new_len = start + *len - end - 1;
-    // int new_len = start + *len - end;
     
     char **new_data = malloc(sizeof(char *) * (new_len + 1));
     int k = 0;
