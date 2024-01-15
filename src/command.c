@@ -102,7 +102,7 @@ int redirection(int *last_return, char *file, int mode, int option) {
     return fd_file;
 }
 
-void add_job(int pid, char *name, struct job *child_processus, int nb_processus) {
+void add_job(int pid, char *name, struct job *child_processus, int nb_processus, int nb_substitutions) {
     if (jobs_nb_last == MAX_JOBS) {
         fprintf(stderr, "Too many jobs\n");
         return;
@@ -111,6 +111,7 @@ void add_job(int pid, char *name, struct job *child_processus, int nb_processus)
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
     jobs[jobs_nb_last]->id = getpgid(pid);
     jobs[jobs_nb_last]->state = "Running";
+    jobs[jobs_nb_last]->nb_substitutions = nb_substitutions;
     // jobs[jobs_nb_last]->all_processus = child_processus;
     // jobs[jobs_nb_last]->nb_processus = nb_processus;
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
@@ -126,7 +127,7 @@ void add_job(int pid, char *name, struct job *child_processus, int nb_processus)
     ++jobs_nb;
 }
 
-void remove_jobs(int need_to_print, pid_t p) {
+void remove_jobs(int need_to_print, pid_t p, int *nb_substitutions) {
     if (p == -1){
         for (int i = 0; i < jobs_nb_last; ++i) {
             int status = 0;
@@ -165,10 +166,26 @@ void remove_jobs(int need_to_print, pid_t p) {
                 if (condition) {
                     free(jobs[i]->name);
                     free(jobs[i]);
+                    if(nb_substitutions != NULL){
+                        *nb_substitutions -= jobs[i]->nb_substitutions;
+                        for(int j = *nb_substitutions ; j < *nb_substitutions + jobs[i]->nb_substitutions; ++j){
+                            char file[18];
+                            strcpy(file, "/tmp/substition");
+                            char b[2];
+                            b[0] = (char) j;
+                            b[1] = '\0';
+                            strcpy(file, b);
+                            remove(file);
+                        }
+                    }
                     jobs[i] = NULL;
                     if (end)
                         --jobs_nb_last;
-                    --jobs_nb;
+                    //--jobs_nb;
+                    if (jobs_nb > 0){
+                        --jobs_nb;
+                    }
+
                 } else
                     end = 0;
             }
@@ -203,7 +220,9 @@ void print_jobs() {
             jobs[i] = NULL;
             if (end)
                 --jobs_nb_last;
-            --jobs_nb;
+            if (jobs_nb > 0){
+                --jobs_nb;
+            }
         } else
             end = 0;
     }
@@ -230,17 +249,14 @@ void fg(int num_job){
             tcsetpgrp(STDIN_FILENO, jobs[num_job - 1]->id);
             tcsetpgrp(STDOUT_FILENO,jobs[num_job - 1]->id);
             int status;
-            
-                kill(-jobs[num_job - 1]->id, SIGCONT);
-                if (jobs_nb > 0){
-                    --jobs_nb;
-                }
-            //}
+            kill(-jobs[num_job - 1]->id, SIGCONT);
+            if (jobs_nb > 0){
+                --jobs_nb;
+            }
             if (waitpid(jobs[num_job - 1]->id, &status, WUNTRACED) != -1){
                 if (WIFEXITED(status)){
                     free(jobs[num_job - 1]->name);
                     jobs[num_job - 1] = NULL;
-                    //jobs_nb--;
                     return;
                 }
                 if (WIFSTOPPED(status)){

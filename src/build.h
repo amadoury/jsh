@@ -34,6 +34,12 @@ void build_jobs();
 // Fonction pour gérer la commande 'kill'
 void build_kill(struct argv_t *arg);
 
+// Fonction pour gérer la commande 'fg'
+void build_fg(struct argv_t * arg);
+
+// Fonction pour gérer la commande 'bg'
+void build_bg(struct argv_t * arg);
+
 // Fonction pour gérer la commande '?'
 void build_interogation();
 

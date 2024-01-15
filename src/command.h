@@ -23,6 +23,7 @@ struct job {
     int foreground;
     struct job *all_processus;
     int nb_processus;
+    int nb_substitutions;
 };
 
 // Quitte le shell avec une valeur donnée
@@ -38,10 +39,10 @@ int cd(const char *pathname);
 int redirection(int *last_return, char *file, int mode, int option);
 
 // Ajoute un job à la liste des jobs
-void add_job(int pid, char *name, struct job *, int);
+void add_job(int pid, char *name, struct job *, int, int);
 
 // Retire un job de la liste des jobs
-void remove_jobs(int need_to_print, pid_t pid);
+void remove_jobs(int need_to_print, pid_t pid, int *);
 
 // Affiche la liste des jobs
 void print_jobs();
@@ -62,5 +63,7 @@ int kill_job(int n, int sig);
 void turn_to_background(int pid);
 
 void do_fg(struct argv_t *);
+
+void do_bg(struct argv_t *);
 
 #endif

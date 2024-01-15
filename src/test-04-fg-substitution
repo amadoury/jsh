@@ -1,0 +1,10 @@
+#IGNORE STDERR
+$ echo | cat <( ./suspend-write-repeat ABC 3 ) | cat
+$ echo | cat <( ./suspend-write-repeat DEF 3 ) | cat
+$ fg %%2
+$ fg %%1
+$ fg %%2
+$ fg %%1
+$ fg %%2
+$ fg %%1
+$ true

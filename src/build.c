@@ -94,7 +94,7 @@ void build_exit(struct argv_t *arg) {
 }
 
 void build_jobs() {
-    remove_jobs(0, -1);
+    remove_jobs(0, -1, NULL);
     print_jobs();
 }
 
@@ -188,16 +188,15 @@ void execute_command(struct argv_t *arg){
             if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
             else
-                remove_jobs(0, -1);
+                remove_jobs(0, -1, NULL);
         }
     } else if (redir_error == 0) {
         int r = execvp(arg->data[0], arg->data);
         if (r == -1) {
             if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
-                // fprintf(stderr, "Unknown command %sfirst%ssecond%sthird%d\n", arg->data[0], arg->data[1], arg->data[2], redir_error);
             else
-                remove_jobs(0, -1);
+                remove_jobs(0, -1, NULL);
         }
     }
 }
@@ -215,13 +214,13 @@ void build_external(struct argv_t *arg) {
             exit(1);
         }
         default: {
-            add_job(pids, l, NULL, 0);
+            add_job(pids, l, NULL, 0, 0);
             if (arg->esp == 0) {
                 tcsetpgrp(STDIN_FILENO, pids);
                 tcsetpgrp(STDOUT_FILENO, pids);
                 if (waitpid(pids, &status, WUNTRACED) != -1) {
                     if (!WIFSTOPPED(status)) {
-                        remove_jobs(0, 1);
+                        remove_jobs(0, 1, NULL);
                     } else {
                         turn_to_background(pids);
                     }
@@ -254,7 +253,19 @@ void build_clean(struct argv_t *arg, int nb_fifo) {
         free(l);
 }
 
-struct job *build_pipe_aux(char **cmds, int n_pipes, struct job *child_processus) {
+void build_fg(struct argv_t * arg){
+    do_fg(arg);
+    last_command_return = 0;
+    tcsetpgrp(STDIN_FILENO, getpid());
+    tcsetpgrp(STDOUT_FILENO, getpid());
+}
+
+void build_bg(struct argv_t * arg){
+    do_bg(arg);
+    last_command_return = 0;
+}
+
+void build_pipe_aux(char **cmds, int n_pipes) {
     int pipefds[2 * n_pipes];
 
     for (int i = 0; i < n_pipes; i++) {
@@ -306,10 +317,10 @@ void build_pipe(struct argv_t * arg, int n_pipes){
     switch (pids) {
         case 0: {
             activate_sig();
-            //execute_command(arg);
             char **cmd_pipe = split_pipe(arg->data, arg->len, n_pipes);
+            
             // build_pipe_aux(cmd_pipe,n_pipes,child_processus);
-            build_pipe_aux(cmd_pipe,n_pipes,NULL);
+            build_pipe_aux(cmd_pipe,n_pipes);
             for(int i = 0; i <= n_pipes; ++i){
                 free(cmd_pipe[i]);
             }
@@ -318,13 +329,13 @@ void build_pipe(struct argv_t * arg, int n_pipes){
         }
         default: {
             // add_job(pids, l, child_processus, n_pipes);
-            add_job(pids, l, NULL, n_pipes);
+            add_job(pids, l, NULL, n_pipes, arg->nb_fifo);
             if (arg->esp == 0) {
                 tcsetpgrp(STDIN_FILENO, pids);
                 tcsetpgrp(STDOUT_FILENO, pids);
                 if (waitpid(pids, &status, WUNTRACED) != -1) {
                     if (!WIFSTOPPED(status)) {
-                        remove_jobs(0, 1);
+                        remove_jobs(0, 1, NULL);
                     } else {
                         turn_to_background(pids);
                     }
@@ -478,7 +489,7 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
                         }
                         else if (strcmp(new_data[0], "bg") == 0)
                         {
-                            do_bg(new_arg);
+                            do_bg(arg);
                         }
                         else
                         {

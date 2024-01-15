@@ -17,7 +17,27 @@ Le code source du projet est organisé de manière à regrouper les fonctionnali
 
 Les structures de données clés utilisées dans le projet incluent :
 - `Job`: Représente un job avec son numéro, son état, son nom et s'il est en avant-plan ou en arrière-plan.
+- La Structure `Job` est la suivante : 
+```c
+struct job {
+    int id;
+    char *state;
+    char *name;
+    int foreground;
+};
+```
+
+`jsh` peut avoir au maximun 512 jobs à la fois.
+
 - `argv_t`: Représente une liste d'arguments, dont on dispose des informations sur sa taille et ses éléments et si la commande est doit être lancée en avant-plan ou en arrière-plan.
+- La structure ```argv_t``` est : 
+```c
+struct argv_t {
+    char **data;
+    int len;
+    int esp;
+};
+```
 
 ## Algorithmes
 
@@ -28,7 +48,7 @@ L'algorithme de job control gère la création, la surveillance et la manipulati
 L'algorithme d'exécution des commandes gère le lancement des commandes externes et internes. Il permet de lancer des commandes en avant-plan ou en arrière-plan, de gérer les commandes internes et de lancer des commandes externes en créant des processus fils.
 
 ### Redirections
-L'algorithme de gestion des redirections analyse la ligne de commande pour détecter les opérations de redirection (<, >, >|, >>, 2>, 2>|, 2>>, | ) et redirige les flux standard en conséquence.
+L'algorithme de gestion des redirections analyse la ligne de commande pour détecter les opérations de redirection (<, >, >|, >>, 2>, 2>|, 2>>) et redirige les flux standard en conséquence.
 
 ## Conclusion
 

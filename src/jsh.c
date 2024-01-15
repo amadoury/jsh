@@ -25,11 +25,11 @@ int main(int argc, char *argv[], char *envp[]) {
     struct argv_t *arg;
     rl_outstream = stderr;
 
-    int test = 0;
+    int fifo_nb = 0;
 
     while (1) {
         
-        remove_jobs(1, -1);
+        remove_jobs(1, -1, &fifo_nb);
         
         char *prompt = build_prompt();
 
@@ -51,12 +51,14 @@ int main(int argc, char *argv[], char *envp[]) {
 
         int new_len = arg->len;
 
-        struct argv_t *new_arg = build_substitution(arg->data, &new_len, 0, arg->all_fifo);
+        struct argv_t *new_arg = build_substitution(arg->data, &new_len, fifo_nb, arg->all_fifo);
         new_arg->esp = 0;
 
 
         new_arg->len = new_len;
         new_arg->esp = arg->esp;
+
+        fifo_nb += new_arg->nb_fifo;
  
         int n_pipes = count_pipes(new_arg->data, new_arg->len);
 
@@ -86,15 +88,11 @@ int main(int argc, char *argv[], char *envp[]) {
                     }
                     else if (strcmp(new_arg->data[0], "fg") == 0)
                     {
-                        do_fg(new_arg);
-                        last_command_return = 0;
-                        tcsetpgrp(STDIN_FILENO, getpid());
-                        tcsetpgrp(STDOUT_FILENO, getpid());
+                        build_fg(new_arg);
                     }
                     else if (strcmp(new_arg->data[0], "bg") == 0)
                     {
-                        do_bg(new_arg);
-                        last_command_return = 0;
+                        build_bg(new_arg);
                     }
                     else
                     {
@@ -104,10 +102,13 @@ int main(int argc, char *argv[], char *envp[]) {
                 }
             }
         }
-        for(int i = 0 ; i < new_arg->nb_fifo ; ++i){
-            remove(new_arg->all_fifo[i]);
-            test = 1;
+        if(!arg->esp){
+            for(int i = 0 ; i < new_arg->nb_fifo ; ++i){
+                remove(new_arg->all_fifo[i]);
+                --fifo_nb;
+            }
         }
+        
         // free(new_arg->data[new_arg->len]);
         build_clean(arg, new_arg->nb_fifo);
         // for(int i = 0 ; i < arg->nb_fifo ; ++i){
