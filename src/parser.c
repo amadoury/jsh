@@ -312,20 +312,27 @@ char **split_without_first_substitution(char **data, int *len, int start, int en
     int new_len = start + *len - end - 1;
     // int new_len = start + *len - end;
     
-    char **new_data = malloc(sizeof(char *) * new_len);
+    char **new_data = malloc(sizeof(char *) * (new_len + 1));
     int k = 0;
     for(int i = 0 ; i < start ; ++i){
-        new_data[k] = data[i];
+        // new_data[k] = data[i];
+        new_data[k] = malloc(strlen(data[i])+1);
+        strcpy(new_data[k], data[i]);
         ++k;
     }
-    // new_data[k] = malloc(sizeof(char) * (strlen(fifo_substition) + 1));
-    // strcpy(new_data[k], fifo_substition);
-    // ++k;
+
+    new_data[k] = malloc(sizeof(char) * (strlen(fifo_substition) + 1));
+    strcpy(new_data[k], fifo_substition);
+    ++k;
 
     for(int i = end + 1 ; i < *len ; ++i){
-        new_data[k] = data[i];
+        // new_data[k] = data[i];
+        new_data[k] = malloc(strlen(data[i])+1);
+        strcpy(new_data[k], data[i]);
         ++k;
     }
+
+    new_data[k] = NULL;
 
     *len = k;
     return new_data;

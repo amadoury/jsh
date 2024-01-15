@@ -21,6 +21,8 @@ struct job {
     char *state;
     char *name;
     int foreground;
+    struct job *all_processus;
+    int nb_processus;
 };
 
 // Quitte le shell avec une valeur donnée
@@ -36,7 +38,7 @@ int cd(const char *pathname);
 int redirection(int *last_return, char *file, int mode, int option);
 
 // Ajoute un job à la liste des jobs
-void add_job(int pid, char *name);
+void add_job(int pid, char *name, struct job *, int);
 
 // Retire un job de la liste des jobs
 void remove_jobs(int need_to_print, pid_t pid);

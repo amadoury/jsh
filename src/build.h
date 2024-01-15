@@ -41,7 +41,7 @@ void build_interogation();
 void build_external(struct argv_t *arg);
 
 // Fonction pour gérer le nettoyage de la mémoire
-void build_clean(struct argv_t *arg);
+void build_clean(struct argv_t *arg, int);
 
 // Fonction pour exécuter une commande pour pipe
 void execute_command(struct argv_t *);

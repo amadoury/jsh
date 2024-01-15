@@ -102,7 +102,7 @@ int redirection(int *last_return, char *file, int mode, int option) {
     return fd_file;
 }
 
-void add_job(int pid, char *name) {
+void add_job(int pid, char *name, struct job *child_processus, int nb_processus) {
     if (jobs_nb_last == MAX_JOBS) {
         fprintf(stderr, "Too many jobs\n");
         return;
@@ -111,6 +111,8 @@ void add_job(int pid, char *name) {
     jobs[jobs_nb_last] = malloc(sizeof(struct job));
     jobs[jobs_nb_last]->id = getpgid(pid);
     jobs[jobs_nb_last]->state = "Running";
+    // jobs[jobs_nb_last]->all_processus = child_processus;
+    // jobs[jobs_nb_last]->nb_processus = nb_processus;
     jobs[jobs_nb_last]->name = malloc(sizeof(char) * (strlen(name) + 1));
     strcpy(jobs[jobs_nb_last]->name, name);
     if (*(name + strlen(name) - 1) == '&') {
@@ -119,7 +121,7 @@ void add_job(int pid, char *name) {
         fprintf(stderr, "[%d] %d  %s  %s\n", jobs_nb_last + 1, jobs[jobs_nb_last]->id, jobs[jobs_nb_last]->state, jobs[jobs_nb_last]->name);
     } else
         jobs[jobs_nb_last]->foreground = 1;
-
+    
     ++jobs_nb_last;
     ++jobs_nb;
 }
@@ -316,16 +318,6 @@ void do_bg(struct argv_t * arg)
     sigaction(SIGTTIN, &actTTINbash, NULL);
     sigaction(SIGQUIT, &actQUITbash, NULL);
     sigaction(SIGTTOU, &actTTOUbash, NULL);
-}
-
-void sig_job(int sig) {
-    fprintf(stderr, "sig %d arrived\n", sig);
-    for (int i = 0; i < jobs_nb_last; ++i) {
-        if (jobs[i] != NULL && jobs[i]->id == getpid()) {
-            if (sig == 9)
-                jobs[i]->state = "Killed ";
-        }
-    }
 }
 
 void activate_sig() {

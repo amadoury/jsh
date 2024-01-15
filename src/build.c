@@ -57,7 +57,8 @@ void build_exit(struct argv_t *arg) {
             free(arg->data);
             free(arg);
             free(line);
-            free(l);
+            // if(arg->nb_fifo < 2)
+                free(l);
             exit_jsh(0);
         }
         if (arg->len == 1) {
@@ -68,7 +69,8 @@ void build_exit(struct argv_t *arg) {
             free(arg->data);
             free(arg);
             free(line);
-            free(l);
+            // if(arg->nb_fifo < 2)
+                free(l);
             exit_jsh(last_command_return);
         } else if (arg->len == 2) {
             int val_exit = atoi(arg->data[1]);
@@ -79,7 +81,8 @@ void build_exit(struct argv_t *arg) {
             free(arg->data);
             free(arg);
             free(line);
-            free(l);
+            // if(arg->nb_fifo < 2)
+                free(l);
             exit_jsh(val_exit);
         } else {
             fprintf(stderr, "exit has at most two arguments\n");
@@ -192,6 +195,7 @@ void execute_command(struct argv_t *arg){
         if (r == -1) {
             if (arg->esp == 0)
                 fprintf(stderr, "Unknown command\n");
+                // fprintf(stderr, "Unknown command %sfirst%ssecond%sthird%d\n", arg->data[0], arg->data[1], arg->data[2], redir_error);
             else
                 remove_jobs(0, -1);
         }
@@ -206,21 +210,25 @@ void build_external(struct argv_t *arg) {
     switch (pids) {
         case 0: {
             activate_sig();
-            for(int i = 0 ; i < arg->nb_fifo ; ++i){
+            // for(int i = 0 ; i < arg->nb_fifo ; ++i){
+            //     // printf("%s fifo i\n", arg->all_fifo[i]);
+            //     // int fd = open(arg->all_fifo[i], O_RDONLY);
+            //     // if(fd == -1){
+            //     //     perror("erreur open");
+            //     //     exit(1);
+            //     // }
+            //     // dup2(fd, 0);
+            //     // close(fd);
+            // }
 
-                int fd = open(arg->all_fifo[i], O_RDONLY);
-                if(fd == -1){
-                    perror("erreur open");
-                    exit(1);
-                }
-                dup2(fd, 0);
-                close(fd);
-            }
+            // for(int i = 0 ; i < arg->len ; ++i){
+            //     printf("%s data %d\n", arg->data[i], i);
+            // }
             execute_command(arg);
             exit(1);
         }
         default: {
-            add_job(pids, l);
+            add_job(pids, l, NULL, 0);
             if (arg->esp == 0) {
                 tcsetpgrp(STDIN_FILENO, pids);
                 tcsetpgrp(STDOUT_FILENO, pids);
@@ -234,9 +242,7 @@ void build_external(struct argv_t *arg) {
                     tcsetpgrp(STDOUT_FILENO, getpid());
                 }
             }
-            for(int i = 0 ; i < arg->nb_fifo ; ++i){
-                remove(arg->all_fifo[i]);
-            }
+            
 
 
             if (WIFEXITED(status)) {
@@ -249,18 +255,19 @@ void build_external(struct argv_t *arg) {
     }
 }
 
-void build_clean(struct argv_t *arg) {
-    for(int i = 0 ; i < arg->nb_fifo ; ++i){
+void build_clean(struct argv_t *arg, int nb_fifo) {
+    for(int i = 0 ; i < nb_fifo ; ++i){
         free(arg->all_fifo[i]);
     }
     free(arg->all_fifo);
     free(arg->data);
     free(arg);
     free(line);
-    free(l);
+    if(nb_fifo < 2)
+        free(l);
 }
 
-void build_pipe_aux(char **cmds, int n_pipes) {
+struct job *build_pipe_aux(char **cmds, int n_pipes, struct job *child_processus) {
     int pipefds[2 * n_pipes];
 
     for (int i = 0; i < n_pipes; i++) {
@@ -269,6 +276,7 @@ void build_pipe_aux(char **cmds, int n_pipes) {
             exit(EXIT_FAILURE);
         }
     }
+
 
     int pid;
     for (int i = 0; i < n_pipes + 1; i++) {
@@ -288,6 +296,9 @@ void build_pipe_aux(char **cmds, int n_pipes) {
         } else if (pid < 0) {
             perror("Erreur fork");
             exit(EXIT_FAILURE);
+        }else{
+            // child_processus[i].id = pid;
+            // child_processus[i].state = "Running";
         }
     }
 
@@ -304,12 +315,14 @@ void build_pipe(struct argv_t * arg, int n_pipes){
     pid_t pids = fork();
     int status = 0;
 
+    // struct job *child_processus = malloc(sizeof(struct job) * n_pipes);
     switch (pids) {
         case 0: {
             activate_sig();
             //execute_command(arg);
             char **cmd_pipe = split_pipe(arg->data, arg->len, n_pipes);
-            build_pipe_aux(cmd_pipe,n_pipes);
+            // build_pipe_aux(cmd_pipe,n_pipes,child_processus);
+            build_pipe_aux(cmd_pipe,n_pipes,NULL);
             for(int i = 0; i <= n_pipes; ++i){
                 free(cmd_pipe[i]);
             }
@@ -317,7 +330,8 @@ void build_pipe(struct argv_t * arg, int n_pipes){
             exit(1);
         }
         default: {
-            add_job(pids, l);
+            // add_job(pids, l, child_processus, n_pipes);
+            add_job(pids, l, NULL, n_pipes);
             if (arg->esp == 0) {
                 tcsetpgrp(STDIN_FILENO, pids);
                 tcsetpgrp(STDOUT_FILENO, pids);
@@ -332,15 +346,49 @@ void build_pipe(struct argv_t * arg, int n_pipes){
                 }
             }
 
-            // if (WIFEXITED(status)) {
-            //     last_command_return = WEXITSTATUS(status);
-            // } else {
-            //     last_command_return = 1;
-            // }
             break;
         }
     }
 }
+
+// void build_pipe(struct argv_t * arg, int n_pipes){
+//     pid_t pids = fork();
+//     int status = 0;
+
+//     struct job *child_processus = malloc(sizeof(struct job) * n_pipes);
+
+//     activate_sig();
+//     //execute_command(arg);
+//     char **cmd_pipe = split_pipe(arg->data, arg->len, n_pipes);
+//     build_pipe_aux(cmd_pipe,n_pipes,child_processus);
+//     for(int i = 0; i <= n_pipes; ++i){
+//         free(cmd_pipe[i]);
+//     }
+//     free(cmd_pipe);
+//     signaux();
+
+
+//     add_job(pids, l, child_processus, n_pipes);
+//     if (arg->esp == 0) {
+//         tcsetpgrp(STDIN_FILENO, pids);
+//         tcsetpgrp(STDOUT_FILENO, pids);
+//         if (waitpid(pids, &status, WUNTRACED) != -1) {
+//             if (!WIFSTOPPED(status)) {
+//                 remove_jobs(0, 1);
+//             } else {
+//                 turn_to_background(pids);
+//             }
+//             tcsetpgrp(STDIN_FILENO, getpid());
+//             tcsetpgrp(STDOUT_FILENO, getpid());
+//         }
+//     }
+
+//     // if (WIFEXITED(status)) {
+//     //     last_command_return = WEXITSTATUS(status);
+//     // } else {
+//     //     last_command_return = 1;
+//     // }
+// }
 
 struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all_fifo) {
     int start = 0;
@@ -411,6 +459,7 @@ struct argv_t *build_substitution(char **data, int *len, int fifo_nb, char **all
                 struct argv_t *arg = malloc(sizeof(struct argv_t));
                 arg->data = new_data;
                 arg->len = new_len;
+                arg->esp = 0;
                 if (is_input_well_formed(arg) == 0){
                     return arg;
                 }
